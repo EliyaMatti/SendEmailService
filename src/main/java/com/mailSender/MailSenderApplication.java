@@ -1,6 +1,7 @@
 package com.mailSender;
 
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
@@ -9,6 +10,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 public class MailSenderApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(MailSenderApplication.class, args);
+    SpringApplication application = new SpringApplication(MailSenderApplication.class);
+    application.setWebApplicationType(WebApplicationType.NONE);
+    application.run(args);
   }
 }

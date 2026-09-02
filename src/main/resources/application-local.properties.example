@@ -11,3 +11,6 @@ mail.attachment-path=C:\\path\\to\\resume.pdf
 # Leave batch off and dry-run on until you are ready to send.
 mail.batch-enabled=false
 mail.dry-run=true
+mail.html=false
+mail.sent-log-path=C:\\path\\to\\sent-addresses.txt
+mail.send-delay-ms=1000

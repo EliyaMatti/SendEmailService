@@ -23,6 +23,9 @@ Set credentials via environment variables or a local properties file.
 | `MAIL_ATTACHMENT_PATH` | Optional attachment | empty |
 | `MAIL_BATCH_ENABLED` | Run send-on-startup batch | `false` |
 | `MAIL_DRY_RUN` | Print To + body; skip SMTP | `true` |
+| `MAIL_HTML` | Send body as HTML | `false` |
+| `MAIL_SENT_LOG_PATH` | File of already-sent addresses | empty |
+| `MAIL_SEND_DELAY_MS` | Delay between real sends (ms) | `1000` |
 
 ### Local properties file
 
@@ -49,14 +52,24 @@ To send for real (use a test inbox first):
 MAIL_BATCH_ENABLED=true MAIL_DRY_RUN=false mvn spring-boot:run
 ```
 
-Excel columns: email in column A, name in column B.
+Real send also requires SMTP username, password, and from-address. If `mail.attachment-path` is set, the file must exist and be readable or the job fails before any message is sent.
 
-The body file is a template. Placeholders of the form `{{key}}` are replaced per recipient. Built-in keys are `{{name}}` and `{{email}}`. Unknown placeholders are replaced with an empty string.
+Successful To-addresses are appended to `mail.sent-log-path` (when set) and skipped on later runs. Dry-run does not write that log. There is a pause of `mail.send-delay-ms` between real send attempts (not after the last, and not in dry-run).
+
+## Excel and templates
+
+The first row is treated as headers when it includes `email` and `name` (aliases such as `e-mail` / `full_name` are accepted). Other headers become `{{placeholder}}` keys: non-word characters are stripped and the key is lowercased (`Company` → `{{company}}`).
+
+If the first row does not look like headers, column A is email and column B is name.
+
+Blank rows and cells without `@` are skipped. Formula and numeric cells are read via Apache POI `DataFormatter`.
+
+The body file is UTF-8. Placeholders of the form `{{key}}` are replaced per recipient. Built-in keys are `{{name}}` and `{{email}}`. Unknown placeholders are replaced with an empty string.
 
 Example:
 
 ```
 Hi {{name}},
 
-This message was sent to {{email}}.
+This message was sent to {{email}} at {{company}}.
 ```

@@ -1,12 +1,16 @@
 package com.mailSender;
 
 import jakarta.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
 public class EmailService {
+
+  private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
   private final JavaMailSender mailSender;
   private final MailAppProperties mailAppProperties;
@@ -23,8 +27,8 @@ public class EmailService {
 
   public void sendEmail(String to, String body) {
     if (mailAppProperties.isDryRun()) {
-      System.out.println("DRY-RUN To: " + to);
-      System.out.println(body);
+      log.info("DRY-RUN To: {}", to);
+      log.info("{}", body);
       return;
     }
     try {
@@ -33,10 +37,10 @@ public class EmailService {
       helper.setFrom(mailAppProperties.getFrom());
       helper.setTo(to);
       helper.setSubject(mailAppProperties.getSubject());
-      helper.setText(body);
+      helper.setText(body, mailAppProperties.isHtml());
       mailBodyAttachment.addAttachment(helper);
       mailSender.send(message);
-      System.out.println("Sent message successfully to " + to);
+      log.info("Sent message successfully to {}", to);
     } catch (Exception e) {
       throw new RuntimeException("Failed to send email to " + to, e);
     }
