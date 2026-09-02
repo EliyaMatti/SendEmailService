@@ -21,7 +21,8 @@ Set credentials via environment variables or a local properties file.
 | `MAIL_EXCEL_FILE_PATH` | Recipients Excel path | empty |
 | `MAIL_BODY_FILE_PATH` | Body template text file | empty |
 | `MAIL_ATTACHMENT_PATH` | Optional attachment | empty |
-| `MAIL_BATCH_ENABLED` | Run send-on-startup batch | `true` |
+| `MAIL_BATCH_ENABLED` | Run send-on-startup batch | `false` |
+| `MAIL_DRY_RUN` | Print To + body; skip SMTP | `true` |
 
 ### Local properties file
 
@@ -30,8 +31,22 @@ Set credentials via environment variables or a local properties file.
 
 ## Run
 
+Startup does **not** send mail by default: `mail.batch-enabled` is `false`, and `mail.dry-run` is `true`. Real SMTP runs only when the batch is enabled **and** dry-run is off.
+
 ```
 mvn spring-boot:run
+```
+
+To preview a batch without SMTP (prints each To address and personalized body):
+
+```
+MAIL_BATCH_ENABLED=true MAIL_DRY_RUN=true mvn spring-boot:run
+```
+
+To send for real (use a test inbox first):
+
+```
+MAIL_BATCH_ENABLED=true MAIL_DRY_RUN=false mvn spring-boot:run
 ```
 
 Excel columns: email in column A, name in column B.

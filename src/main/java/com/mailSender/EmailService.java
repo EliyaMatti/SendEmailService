@@ -22,6 +22,11 @@ public class EmailService {
   }
 
   public void sendEmail(String to, String body) {
+    if (mailAppProperties.isDryRun()) {
+      System.out.println("DRY-RUN To: " + to);
+      System.out.println(body);
+      return;
+    }
     try {
       MimeMessage message = mailSender.createMimeMessage();
       MimeMessageHelper helper = new MimeMessageHelper(message, true);

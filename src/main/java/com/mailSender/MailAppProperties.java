@@ -10,7 +10,8 @@ public class MailAppProperties {
   private String excelFilePath = "";
   private String bodyFilePath = "";
   private String attachmentPath = "";
-  private boolean batchEnabled = true;
+  private boolean batchEnabled = false;
+  private boolean dryRun = true;
 
   public String getFrom() {
     return from;
@@ -58,5 +59,13 @@ public class MailAppProperties {
 
   public void setBatchEnabled(boolean batchEnabled) {
     this.batchEnabled = batchEnabled;
+  }
+
+  public boolean isDryRun() {
+    return dryRun;
+  }
+
+  public void setDryRun(boolean dryRun) {
+    this.dryRun = dryRun;
   }
 }

@@ -18,6 +18,8 @@ public class BatchMailRunner implements CommandLineRunner {
   @Override
   public void run(String... args) {
     if (!mailAppProperties.isBatchEnabled()) {
+      System.out.println(
+          "Mail batch skipped: mail.batch-enabled is false (set MAIL_BATCH_ENABLED=true to run).");
       return;
     }
     String excelFilePath = mailAppProperties.getExcelFilePath();
@@ -29,6 +31,10 @@ public class BatchMailRunner implements CommandLineRunner {
       System.out.println(
           "Mail batch skipped: set mail.excel-file-path and mail.body-file-path (or MAIL_EXCEL_FILE_PATH / MAIL_BODY_FILE_PATH).");
       return;
+    }
+    if (mailAppProperties.isDryRun()) {
+      System.out.println(
+          "Mail batch dry-run: printing To and body; SMTP is skipped (set MAIL_DRY_RUN=false to send).");
     }
     List<EmailRecipient> recipients = ReadFromExcel.readEmailsAndNamesFromExcel(excelFilePath);
     mailBody.sendPersonalizedEmails(bodyFilePath, recipients);

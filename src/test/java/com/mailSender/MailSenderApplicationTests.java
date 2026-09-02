@@ -7,7 +7,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
-@TestPropertySource(properties = "mail.batch-enabled=false")
+@TestPropertySource(properties = {"mail.batch-enabled=false", "mail.dry-run=true"})
 class MailSenderApplicationTests {
 
   @MockBean private JavaMailSender javaMailSender;

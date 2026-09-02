@@ -13,7 +13,7 @@ Agents: start with [AGENTS.md](AGENTS.md), then follow [AGENT_WORKFLOW.md](AGENT
   - Print a summary: sent / failed / skipped.
   - Files: `EmailService.java`, `BatchMailRunner.java`, `MailBody.java`
 
-- [ ] **H2. Safe default / dry-run**
+- [x] **H2. Safe default / dry-run**
   - Do not send on every `mvn spring-boot:run` by accident.
   - Default `mail.batch-enabled` to `false`, **or** add `MAIL_DRY_RUN` that prints To + body and skips SMTP.
   - Files: `application.properties`, `BatchMailRunner.java`, README

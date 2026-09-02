@@ -8,3 +8,6 @@ mail.from=your.address@gmail.com
 mail.excel-file-path=C:\\path\\to\\recipients.xlsx
 mail.body-file-path=C:\\path\\to\\body.txt
 mail.attachment-path=C:\\path\\to\\resume.pdf
+# Leave batch off and dry-run on until you are ready to send.
+mail.batch-enabled=false
+mail.dry-run=true
