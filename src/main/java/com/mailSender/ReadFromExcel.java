@@ -1,6 +1,5 @@
 package com.mailSender;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,7 +56,9 @@ public class ReadFromExcel {
         }
         recipients.add(new EmailRecipient(email, name, columns.extras(row, formatter, evaluator)));
       }
-    } catch (IOException e) {
+    } catch (IllegalStateException e) {
+      throw e;
+    } catch (Exception e) {
       throw new IllegalStateException("Cannot read Excel file: " + filePath, e);
     }
     return recipients;
@@ -126,14 +127,17 @@ public class ReadFromExcel {
           extras.put(i, key);
         }
       }
-      boolean headerRow = emailIndex >= 0 || nameIndex >= 0;
-      if (!headerRow) {
-        return new ColumnMap(0, 1, Map.of(), false);
+      boolean bothHeaders = emailIndex >= 0 && nameIndex >= 0;
+      if (bothHeaders) {
+        return new ColumnMap(emailIndex, nameIndex, extras, true);
       }
-      if (emailIndex < 0 || nameIndex < 0) {
-        throw new IllegalStateException("Excel header row must include email and name columns");
+      if (emailIndex >= 0) {
+        String colA = cellValue(firstRow.getCell(0), formatter, evaluator);
+        if (!colA.contains("@")) {
+          throw new IllegalStateException("Excel header row must include email and name columns");
+        }
       }
-      return new ColumnMap(emailIndex, nameIndex, extras, true);
+      return new ColumnMap(0, 1, Map.of(), false);
     }
 
     boolean headerRow() {

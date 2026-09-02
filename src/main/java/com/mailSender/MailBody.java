@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +59,13 @@ public class MailBody {
 
   public void sendPersonalizedEmails(String textFilePath, List<EmailRecipient> recipients) {
     String template = readFileContent(textFilePath);
-    Set<String> alreadySent = sentAddressLog.load();
+    if (recipients == null || recipients.isEmpty()) {
+      log.warn(
+          "No recipients to send: Excel had no usable rows (header-only or all rows skipped).");
+      log.info("Batch summary: sent=0, failed=0, skipped=0");
+      return;
+    }
+    Set<String> alreadySent = new LinkedHashSet<>(sentAddressLog.load());
     int sent = 0;
     int failed = 0;
     int skipped = 0;
@@ -76,10 +83,19 @@ public class MailBody {
       String emailBody = personalize(template, recipient);
       try {
         emailService.sendEmail(email, emailBody);
-        if (!mailAppProperties.isDryRun()) {
-          sentAddressLog.record(email);
-        }
         sent++;
+        String normalized = SentAddressLog.normalize(email);
+        alreadySent.add(normalized);
+        if (!mailAppProperties.isDryRun()) {
+          try {
+            sentAddressLog.record(email);
+          } catch (RuntimeException logError) {
+            log.warn(
+                "Sent log write failed after SMTP success for {}: {}",
+                email,
+                logError.getMessage());
+          }
+        }
       } catch (RuntimeException e) {
         failed++;
         log.warn("Failed to send to {}: {}", email, e.getMessage());
@@ -87,6 +103,9 @@ public class MailBody {
       delayNextAttempt = shouldDelay();
     }
     log.info("Batch summary: sent={}, failed={}, skipped={}", sent, failed, skipped);
+    if (failed > 0) {
+      throw new IllegalStateException("Batch had " + failed + " send failure(s)");
+    }
   }
 
   private boolean shouldDelay() {

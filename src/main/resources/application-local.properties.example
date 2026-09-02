@@ -12,5 +12,5 @@ mail.attachment-path=C:\\path\\to\\resume.pdf
 mail.batch-enabled=false
 mail.dry-run=true
 mail.html=false
-mail.sent-log-path=C:\\path\\to\\sent-addresses.txt
+mail.sent-log-path=sent-addresses.txt
 mail.send-delay-ms=1000

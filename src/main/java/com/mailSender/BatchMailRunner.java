@@ -51,6 +51,7 @@ public class BatchMailRunner implements CommandLineRunner {
           "Mail batch dry-run: printing To and body; SMTP is skipped (set MAIL_DRY_RUN=false to send).");
     } else {
       requireSmtpConfig();
+      requireSentLogPath();
       String attachmentPath = mailAppProperties.getAttachmentPath();
       if (attachmentPath != null && !attachmentPath.isBlank()) {
         File attachment = new File(attachmentPath);
@@ -68,6 +69,13 @@ public class BatchMailRunner implements CommandLineRunner {
     if (isBlank(smtpUsername) || isBlank(smtpPassword) || isBlank(mailAppProperties.getFrom())) {
       throw new IllegalStateException(
           "Real send requires spring.mail.username, spring.mail.password, and mail.from");
+    }
+  }
+
+  private void requireSentLogPath() {
+    if (isBlank(mailAppProperties.getSentLogPath())) {
+      throw new IllegalStateException(
+          "Real send requires mail.sent-log-path (MAIL_SENT_LOG_PATH) so addresses are not mailed twice");
     }
   }
 

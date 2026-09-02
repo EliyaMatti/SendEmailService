@@ -36,3 +36,4 @@ build/
 application-local.properties
 **/application-local.properties
 .env
+sent-addresses.txt

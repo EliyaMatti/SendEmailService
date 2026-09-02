@@ -13,7 +13,7 @@ public class MailAppProperties {
   private boolean batchEnabled = false;
   private boolean dryRun = true;
   private boolean html = false;
-  private String sentLogPath = "";
+  private String sentLogPath = "sent-addresses.txt";
   private long sendDelayMs = 1000;
 
   public String getFrom() {

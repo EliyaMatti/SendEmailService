@@ -1,5 +1,7 @@
 package com.mailSender;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -38,11 +40,16 @@ class MailBodySendLoopTest {
     when(sentLog.load()).thenReturn(Set.of());
 
     MailBody mailBody = new MailBody(emailService, properties, sentLog);
-    mailBody.sendPersonalizedEmails(
-        body.toString(),
-        List.of(
-            new EmailRecipient("a@example.com", "Ada"),
-            new EmailRecipient("b@example.com", "Bob")));
+    IllegalStateException ex =
+        assertThrows(
+            IllegalStateException.class,
+            () ->
+                mailBody.sendPersonalizedEmails(
+                    body.toString(),
+                    List.of(
+                        new EmailRecipient("a@example.com", "Ada"),
+                        new EmailRecipient("b@example.com", "Bob"))));
+    assertTrue(ex.getMessage().contains("1 send failure"));
 
     verify(emailService).sendEmail(eq("a@example.com"), anyString());
     verify(emailService).sendEmail(eq("b@example.com"), anyString());
@@ -91,6 +98,75 @@ class MailBodySendLoopTest {
         body.toString(), List.of(new EmailRecipient("a@example.com", "Ada")));
 
     verify(emailService).sendEmail(eq("a@example.com"), anyString());
+    verify(sentLog, never()).record(anyString());
+  }
+
+  @Test
+  void skipsInFileDuplicateAfterFirstSuccessIgnoringCase() throws Exception {
+    Path body = tempDir.resolve("body.txt");
+    Files.writeString(body, "Hi {{name}}", StandardCharsets.UTF_8);
+
+    EmailService emailService = mock(EmailService.class);
+    MailAppProperties properties = new MailAppProperties();
+    properties.setDryRun(false);
+    properties.setSendDelayMs(0);
+    SentAddressLog sentLog = mock(SentAddressLog.class);
+    when(sentLog.load()).thenReturn(Set.of());
+
+    MailBody mailBody = new MailBody(emailService, properties, sentLog);
+    mailBody.sendPersonalizedEmails(
+        body.toString(),
+        List.of(
+            new EmailRecipient("Ada@Example.com", "Ada"),
+            new EmailRecipient("ada@example.com", "Ada again")));
+
+    verify(emailService, times(1)).sendEmail(eq("Ada@Example.com"), anyString());
+    verify(emailService, never()).sendEmail(eq("ada@example.com"), anyString());
+    verify(sentLog).record("Ada@Example.com");
+  }
+
+  @Test
+  void sentLogWriteFailureAfterSmtpSuccessIsNotASendFailure() throws Exception {
+    Path body = tempDir.resolve("body.txt");
+    Files.writeString(body, "Hi {{name}}", StandardCharsets.UTF_8);
+
+    EmailService emailService = mock(EmailService.class);
+    MailAppProperties properties = new MailAppProperties();
+    properties.setDryRun(false);
+    properties.setSendDelayMs(0);
+    SentAddressLog sentLog = mock(SentAddressLog.class);
+    when(sentLog.load()).thenReturn(Set.of());
+    doThrow(new IllegalStateException("disk full")).when(sentLog).record("a@example.com");
+
+    MailBody mailBody = new MailBody(emailService, properties, sentLog);
+    mailBody.sendPersonalizedEmails(
+        body.toString(),
+        List.of(
+            new EmailRecipient("a@example.com", "Ada"),
+            new EmailRecipient("b@example.com", "Bob")));
+
+    verify(emailService).sendEmail(eq("a@example.com"), anyString());
+    verify(emailService).sendEmail(eq("b@example.com"), anyString());
+    verify(sentLog).record("a@example.com");
+    verify(sentLog).record("b@example.com");
+  }
+
+  @Test
+  void emptyRecipientListDoesNotSend() throws Exception {
+    Path body = tempDir.resolve("body.txt");
+    Files.writeString(body, "Hi {{name}}", StandardCharsets.UTF_8);
+
+    EmailService emailService = mock(EmailService.class);
+    MailAppProperties properties = new MailAppProperties();
+    properties.setDryRun(false);
+    properties.setSendDelayMs(0);
+    SentAddressLog sentLog = mock(SentAddressLog.class);
+
+    MailBody mailBody = new MailBody(emailService, properties, sentLog);
+    mailBody.sendPersonalizedEmails(body.toString(), List.of());
+
+    verify(emailService, never()).sendEmail(anyString(), anyString());
+    verify(sentLog, never()).load();
     verify(sentLog, never()).record(anyString());
   }
 }

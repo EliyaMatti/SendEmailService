@@ -24,7 +24,7 @@ Set credentials via environment variables or a local properties file.
 | `MAIL_BATCH_ENABLED` | Run send-on-startup batch | `false` |
 | `MAIL_DRY_RUN` | Print To + body; skip SMTP | `true` |
 | `MAIL_HTML` | Send body as HTML | `false` |
-| `MAIL_SENT_LOG_PATH` | File of already-sent addresses | empty |
+| `MAIL_SENT_LOG_PATH` | File of already-sent addresses | `sent-addresses.txt` |
 | `MAIL_SEND_DELAY_MS` | Delay between real sends (ms) | `1000` |
 
 ### Local properties file
@@ -49,12 +49,12 @@ MAIL_BATCH_ENABLED=true MAIL_DRY_RUN=true mvn spring-boot:run
 To send for real (use a test inbox first):
 
 ```
-MAIL_BATCH_ENABLED=true MAIL_DRY_RUN=false mvn spring-boot:run
+MAIL_BATCH_ENABLED=true MAIL_DRY_RUN=false MAIL_SENT_LOG_PATH=sent-addresses.txt mvn spring-boot:run
 ```
 
-Real send also requires SMTP username, password, and from-address. If `mail.attachment-path` is set, the file must exist and be readable or the job fails before any message is sent.
+Real send also requires SMTP username, password, from-address, and a non-blank `MAIL_SENT_LOG_PATH` (default `sent-addresses.txt`, gitignored). If `mail.attachment-path` is set, the file must exist and be readable or the job fails before any message is sent.
 
-Successful To-addresses are appended to `mail.sent-log-path` (when set) and skipped on later runs. Dry-run does not write that log. There is a pause of `mail.send-delay-ms` between real send attempts (not after the last, and not in dry-run).
+Successful To-addresses are appended to `mail.sent-log-path` and skipped on later runs. Dry-run does not write that log, but it still **skips addresses already recorded** there, so a re-run preview hides those rows. There is a pause of `mail.send-delay-ms` between real send attempts (not after the last, and not in dry-run).
 
 ## Excel and templates
 
