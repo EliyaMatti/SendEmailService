@@ -1,31 +1,28 @@
 package com.mailSender;
 
-import jakarta.activation.DataHandler;
-import jakarta.activation.DataSource;
-import jakarta.activation.FileDataSource;
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeBodyPart;
 import java.io.File;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Component;
 
+@Component
 public class MailBodyAttachment {
 
-  public static MimeBodyPart attachemt() {
-    MimeBodyPart attachmentBodyPart = new MimeBodyPart();
-    try {
-      String filePath = "C:\\Users\\eliya\\Desktop\\Resume\\Java_Developer_Resume_Eliya.pdf";
-      File file = new File(filePath);
-      if (!file.exists() || !file.canRead()) {
-        throw new RuntimeException("Cannot read file: " + file.getAbsolutePath());
-      }
-      DataSource source = new FileDataSource(filePath);
-      attachmentBodyPart.setDataHandler(new DataHandler(source));
-      attachmentBodyPart.setFileName(file.getName());
+  private final MailAppProperties mailAppProperties;
 
-    } catch (MessagingException e) {
-      e.printStackTrace();
-    } catch (RuntimeException e) {
-      e.printStackTrace();
+  public MailBodyAttachment(MailAppProperties mailAppProperties) {
+    this.mailAppProperties = mailAppProperties;
+  }
+
+  public void addAttachment(MimeMessageHelper helper) throws MessagingException {
+    String filePath = mailAppProperties.getAttachmentPath();
+    if (filePath == null || filePath.isBlank()) {
+      return;
     }
-    return attachmentBodyPart;
+    File file = new File(filePath);
+    if (!file.exists() || !file.canRead()) {
+      throw new RuntimeException("Cannot read file: " + file.getAbsolutePath());
+    }
+    helper.addAttachment(file.getName(), file);
   }
 }

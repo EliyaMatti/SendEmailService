@@ -7,8 +7,16 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import org.springframework.stereotype.Component;
 
+@Component
 public class MailBody {
+
+  private final EmailService emailService;
+
+  public MailBody(EmailService emailService) {
+    this.emailService = emailService;
+  }
 
   public static String readFileContent(String filePath) {
     StringBuilder content = new StringBuilder();
@@ -46,8 +54,7 @@ public class MailBody {
     }
   }
 
-  public static void sendPersonalizedEmails(
-      String from, String textFilePath, List<EmailRecipient> recipients) {
+  public void sendPersonalizedEmails(String textFilePath, List<EmailRecipient> recipients) {
     String keyword = "Hi ";
 
     for (EmailRecipient recipient : recipients) {
@@ -67,7 +74,7 @@ public class MailBody {
         modifyTextFileContent(tempFilePath, keyword, recipient.getName());
         String emailBody = readFileContent(tempFilePath);
         if (emailBody != null) {
-          MessageBody.sendEmail(from, recipient.getEmail(), emailBody);
+          emailService.sendEmail(recipient.getEmail(), emailBody);
         }
         new File(tempFilePath).delete();
       } catch (IOException e) {
