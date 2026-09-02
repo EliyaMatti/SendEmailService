@@ -34,4 +34,14 @@ Set credentials via environment variables or a local properties file.
 mvn spring-boot:run
 ```
 
-Excel columns: email in column A, name in column B. The body file is personalized by inserting the name after the `Hi ` keyword.
+Excel columns: email in column A, name in column B.
+
+The body file is a template. Placeholders of the form `{{key}}` are replaced per recipient. Built-in keys are `{{name}}` and `{{email}}`. Unknown placeholders are replaced with an empty string.
+
+Example:
+
+```
+Hi {{name}},
+
+This message was sent to {{email}}.
+```
