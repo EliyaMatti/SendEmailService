@@ -1,0 +1,29 @@
+---
+description: Java batch-mail conventions for this service
+globs: "**/*.java"
+alwaysApply: false
+---
+
+# Java mail batch
+
+- Fail per recipient in the send loop; do not abort the whole list on one SMTP error (H1).
+- Missing Excel/body files must throw / non-zero exit, not empty list + success (H4).
+- Read templates as UTF-8, not `new FileReader(path)` (M1).
+- Excel: skip headers, trim, skip invalid emails, `DataFormatter` for non-STRING cells (H3).
+- Log with SLF4J, not `System.out` / `printStackTrace` (L3).
+- `getPlaceholders()` should not expose a mutable map (L4).
+- Prefer `WebApplicationType.NONE` or no `starter-web` (L2). Do not add REST APIs unless asked.
+
+```java
+// ❌ BAD
+for (EmailRecipient r : recipients) {
+  emailService.sendEmail(r.getEmail(), body); // throws → rest never sent
+}
+
+// ✅ GOOD
+try {
+  emailService.sendEmail(r.getEmail(), body);
+} catch (RuntimeException e) {
+  log.warn("Failed {}", r.getEmail(), e);
+}
+```

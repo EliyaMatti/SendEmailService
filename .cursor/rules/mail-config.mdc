@@ -1,0 +1,22 @@
+---
+description: Keep mail.* properties, env vars, and MailAppProperties in sync
+globs: "**/*.{properties,example}"
+alwaysApply: false
+---
+
+# Mail config
+
+- New settings need all of: `application.properties` (`${ENV:default}`), `MailAppProperties`, `application-local.properties.example`, README env table.
+- Defaults that send mail must be safe: prefer `mail.batch-enabled=false` and `mail.dry-run` (H2).
+- Never put real passwords in `application.properties` or the example file.
+
+```properties
+# ❌ BAD
+spring.mail.password=abcd-efgh-ijkl-mnop
+mail.batch-enabled=true
+
+# ✅ GOOD
+spring.mail.password=${MAIL_PASSWORD:}
+mail.batch-enabled=${MAIL_BATCH_ENABLED:false}
+mail.dry-run=${MAIL_DRY_RUN:true}
+```

@@ -1,0 +1,18 @@
+---
+description: Never send real email while implementing; keep secrets out of git
+alwaysApply: true
+---
+
+# No live mail, no secrets
+
+- Do not call real SMTP to verify changes. Use dry-run, `mail.batch-enabled=false`, and mocked `JavaMailSender` in tests.
+- Do not put `MAIL_PASSWORD` or App Passwords in source, commits, or README examples (keep placeholders).
+- Do not commit `application-local.properties` or `.env` (gitignored).
+- I1 (rotate leaked Gmail App Password) is the user’s Google Account action. Do not rewrite git history unless they explicitly ask.
+
+```text
+# ❌ BAD — tests or run that send to a real spreadsheet
+MAIL_BATCH_ENABLED=true MAIL_DRY_RUN=false mvn spring-boot:run
+
+# ✅ GOOD — batch off or dry-run; tests mock JavaMailSender
+```

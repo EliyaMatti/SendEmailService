@@ -2,6 +2,8 @@
 
 Work **High → Medium → Low**. Check items off as they land. Tests for a change should ship with that change when possible.
 
+Agents: start with [AGENTS.md](AGENTS.md), then follow [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md) (one ID per pass, suggested order, definition of done). Project rules: `.cursor/rules/`.
+
 ---
 
 ## High — correctness and accidental sends
