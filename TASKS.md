@@ -132,7 +132,7 @@ Agents: start with [AGENTS.md](AGENTS.md), then follow [AGENT_WORKFLOW.md](AGENT
 
 ## Info (not code, still required)
 
-- [ ] **I1. Rotate any Gmail App Password** that was ever committed; treat git history as leaked.
+- [x] **I1. Rotate any Gmail App Password** that was ever committed; treat git history as leaked.
 
 ---
 
