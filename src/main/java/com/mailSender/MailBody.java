@@ -1,16 +1,18 @@
 package com.mailSender;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 @Component
 public class MailBody {
+
+  private static final Pattern PLACEHOLDER = Pattern.compile("\\{\\{(\\w+)\\}\\}");
 
   private final EmailService emailService;
 
@@ -32,54 +34,31 @@ public class MailBody {
     return content.toString();
   }
 
-  public static void modifyTextFileContent(String filePath, String keyword, String name) {
-    StringBuilder content = new StringBuilder();
-    try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-      String line;
-      while ((line = br.readLine()) != null) {
-        if (line.contains(keyword)) {
-          content.append(line.replace(keyword, keyword + " " + name)).append("\n");
-        } else {
-          content.append(line).append("\n");
-        }
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
+  public static String personalize(String template, EmailRecipient recipient) {
+    if (template == null || recipient == null) {
+      return template;
     }
-
-    try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-      writer.write(content.toString());
-    } catch (IOException e) {
-      e.printStackTrace();
+    Map<String, String> values = recipient.getPlaceholders();
+    Matcher matcher = PLACEHOLDER.matcher(template);
+    StringBuilder result = new StringBuilder();
+    while (matcher.find()) {
+      String key = matcher.group(1);
+      String value = values.getOrDefault(key, "");
+      matcher.appendReplacement(result, Matcher.quoteReplacement(value));
     }
+    matcher.appendTail(result);
+    return result.toString();
   }
 
   public void sendPersonalizedEmails(String textFilePath, List<EmailRecipient> recipients) {
-    String keyword = "Hi ";
+    String template = readFileContent(textFilePath);
+    if (template == null) {
+      return;
+    }
 
     for (EmailRecipient recipient : recipients) {
-      String tempFilePath = textFilePath + ".temp";
-      System.out.println(tempFilePath);
-      try {
-
-        try (BufferedReader br = new BufferedReader(new FileReader(textFilePath));
-            BufferedWriter bw = new BufferedWriter(new FileWriter(tempFilePath))) {
-          String line;
-          while ((line = br.readLine()) != null) {
-            bw.write(line);
-            bw.newLine();
-          }
-        }
-
-        modifyTextFileContent(tempFilePath, keyword, recipient.getName());
-        String emailBody = readFileContent(tempFilePath);
-        if (emailBody != null) {
-          emailService.sendEmail(recipient.getEmail(), emailBody);
-        }
-        new File(tempFilePath).delete();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+      String emailBody = personalize(template, recipient);
+      emailService.sendEmail(recipient.getEmail(), emailBody);
     }
   }
 }
