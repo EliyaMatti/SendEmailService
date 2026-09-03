@@ -1,0 +1,8 @@
+{
+  "name": "SendEmailService",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "user": "ubuntu",
+  "install": ".cursor/scripts/cloud-agent-install.sh"
+}

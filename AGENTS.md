@@ -58,4 +58,18 @@ When all tasks are complete, produce the report required by `DEVELOPMENT_TASKS.m
 - Known issues
 - Milestone 2 readiness (YES/NO and blockers)
 
+| Path | Role |
+| --- | --- |
+| `BatchMailRunner` | Startup batch |
+| `ReadFromExcel` | Recipients |
+| `MailBody` | Template + send loop |
+| `EmailService` | SMTP |
+| `MailBodyAttachment` | Optional file |
+| `MailAppProperties` | `mail.*` config |
+
+## Cloud Agent environment
+
+- Dependencies: `mvn test` (batch stays off in context tests).
+- Dry-run e2e (no SMTP secrets): set `MAIL_BATCH_ENABLED=true`, `MAIL_DRY_RUN=true`, plus `MAIL_EXCEL_FILE_PATH` and `MAIL_BODY_FILE_PATH` to sample files, then `mvn spring-boot:run`.
+- Real sends need `MAIL_USERNAME` / `MAIL_PASSWORD` (or gitignored `application-local.properties`); never commit credentials.
 Begin with **M1-001**.
