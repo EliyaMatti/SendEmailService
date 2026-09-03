@@ -1,40 +1,40 @@
-# Agent workflow — complete `TASKS.md`
+# Agent workflow — complete `DEVELOPMENT_TASKS.md`
 
-Use this file when implementing SendEmailService work from `TASKS.md`. One task (or one tightly coupled pair, e.g. H4+H3) per pass. Do not skip High items for Low cleanup.
+Use this file when implementing ExcelMail Pro Milestone 1 work from `DEVELOPMENT_TASKS.md`. One task (or one tightly coupled pair, e.g. M1-005 + M1-006) per pass. Work phases in order; do not skip discovery for implementation.
 
 ## Goal
 
-Close every checkbox in `TASKS.md` without sending real mail during development. Each closed item must match its bullet list in `TASKS.md`.
+Close every checkbox in `DEVELOPMENT_TASKS.md` without sending real mail during development. Each closed item must match its bullets and deliverables in `DEVELOPMENT_TASKS.md`.
 
 ## Before you start
 
-1. Read `AGENTS.md`, `TASKS.md`, and this file. The **Suggested order** in `TASKS.md` is the sequence. Cursor rules in `.cursor/rules/` always apply for mail safety.
-2. Pick the first unchecked item in that order. If two IDs are listed together (H4 + H3), treat them as one pass.
+1. Read `AGENTS.md`, `DEVELOPMENT_TASKS.md`, and this file. The **Suggested order** in `DEVELOPMENT_TASKS.md` is the sequence. Cursor rules in `.cursor/rules/` always apply for mail safety.
+2. Pick the first unchecked item in that order. If two IDs are listed together, treat them as one pass.
 3. Read the files named under that item. Do not rewrite unrelated classes.
 4. Confirm SMTP will not fire: `mail.batch-enabled=false` in tests, or dry-run once H2 exists. Never use a live App Password against a real recipient list while iterating.
 
-## Loop (repeat until `TASKS.md` is done)
+## Loop (repeat until `DEVELOPMENT_TASKS.md` is done)
 
 ```
 1. Select next ID from Suggested order
 2. Implement only that ID (plus tests for it)
 3. mvn -q test
-4. Check off the ID in TASKS.md
-5. Stop or start the next ID — do not bundle High + Low in one change unless asked
+4. Check off the ID in DEVELOPMENT_TASKS.md
+5. Stop or start the next ID — do not bundle unrelated tasks in one change unless asked
 ```
 
 ### Definition of done (every ID)
 
-- Behavior matches the `TASKS.md` bullets for that ID.
+- Behavior matches the `DEVELOPMENT_TASKS.md` bullets and deliverables for that ID.
 - Tests that prove the new behavior live with the change (`M6` is the dedicated test pass; still add focused tests earlier when the code is testable).
 - `README.md` updated if you added config keys, defaults, or run behavior (`H2`, `M2`, `M5`, `H5`, extra columns).
 - `application.properties` / `MailAppProperties` / `application-local.properties.example` stay in sync for new `mail.*` keys.
 - No secrets in source. Do not commit `application-local.properties` or `.env`.
-- `TASKS.md`: change `- [ ] **ID.` to `- [x] **ID.`
+- `DEVELOPMENT_TASKS.md`: change `- [ ]` to `- [x]` (or `[!]` if blocked) for that task.
 
 ### Stop conditions (ask the user)
 
-- Need a product choice TASKS.md left open (e.g. default batch off **vs** dry-run only). Prefer **both**: default `mail.batch-enabled=false` **and** `mail.dry-run` / `MAIL_DRY_RUN`.
+- Need a product choice `DEVELOPMENT_TASKS.md` left open. Document the choice in the task or README.
 - Would send mail, rewrite git history, or rotate credentials for **I1** (user must rotate the App Password in Google; agent only documents it).
 - Scope beyond the current ID.
 
@@ -147,6 +147,6 @@ Run: `mvn test`. Context load tests must keep batch off.
 ## After the last checkbox
 
 1. `mvn test` is green.
-2. `TASKS.md` all `[x]` except I1 if the user has not confirmed rotation.
+2. `DEVELOPMENT_TASKS.md` Milestone 1 tasks all `[x]` (or `[!]` with explanation).
 3. README describes dry-run, batch default, Excel columns, and new env vars.
 4. Summarize what shipped vs what the user must still do (I1).

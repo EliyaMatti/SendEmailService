@@ -1,5 +1,5 @@
 ---
-description: Session start — read AGENTS.md, TASKS.md, AGENT_WORKFLOW.md
+description: Session start — read AGENTS.md, DEVELOPMENT_TASKS.md, AGENT_WORKFLOW.md
 alwaysApply: true
 ---
 
@@ -8,7 +8,7 @@ alwaysApply: true
 At the beginning of implementation work:
 
 1. Read `AGENTS.md`.
-2. Read `TASKS.md` and `AGENT_WORKFLOW.md`.
-3. Take the first unchecked ID in **Suggested order** (H4+H3 as one pass).
+2. Read `DEVELOPMENT_TASKS.md` and `AGENT_WORKFLOW.md`.
+3. Take the first unchecked task in **Suggested order** (Phase 1 discovery first: M1-001 → M1-003).
 
-Do not skip High items to do Low cleanup. Do not expand scope past the current ID unless the user asks.
+Do not skip discovery for implementation. Do not expand scope past the current ID unless the user asks.
