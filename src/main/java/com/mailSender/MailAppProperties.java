@@ -10,7 +10,11 @@ public class MailAppProperties {
   private String excelFilePath = "";
   private String bodyFilePath = "";
   private String attachmentPath = "";
-  private boolean batchEnabled = true;
+  private boolean batchEnabled = false;
+  private boolean dryRun = true;
+  private boolean html = false;
+  private String sentLogPath = "sent-addresses.txt";
+  private long sendDelayMs = 1000;
 
   public String getFrom() {
     return from;
@@ -58,5 +62,37 @@ public class MailAppProperties {
 
   public void setBatchEnabled(boolean batchEnabled) {
     this.batchEnabled = batchEnabled;
+  }
+
+  public boolean isDryRun() {
+    return dryRun;
+  }
+
+  public void setDryRun(boolean dryRun) {
+    this.dryRun = dryRun;
+  }
+
+  public boolean isHtml() {
+    return html;
+  }
+
+  public void setHtml(boolean html) {
+    this.html = html;
+  }
+
+  public String getSentLogPath() {
+    return sentLogPath;
+  }
+
+  public void setSentLogPath(String sentLogPath) {
+    this.sentLogPath = sentLogPath;
+  }
+
+  public long getSendDelayMs() {
+    return sendDelayMs;
+  }
+
+  public void setSendDelayMs(long sendDelayMs) {
+    this.sendDelayMs = sendDelayMs;
   }
 }

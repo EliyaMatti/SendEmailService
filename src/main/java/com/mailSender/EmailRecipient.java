@@ -1,5 +1,6 @@
 package com.mailSender;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -9,15 +10,28 @@ public class EmailRecipient {
   private final Map<String, String> placeholders;
 
   public EmailRecipient(String email, String name) {
+    this(email, name, Map.of());
+  }
+
+  public EmailRecipient(String email, String name, Map<String, String> extraPlaceholders) {
     this.email = email;
     this.name = name;
-    this.placeholders = new LinkedHashMap<>();
+    Map<String, String> values = new LinkedHashMap<>();
     if (email != null) {
-      this.placeholders.put("email", email);
+      values.put("email", email);
     }
     if (name != null) {
-      this.placeholders.put("name", name);
+      values.put("name", name);
     }
+    if (extraPlaceholders != null) {
+      extraPlaceholders.forEach(
+          (key, value) -> {
+            if (key != null && !key.isBlank() && !"email".equals(key) && !"name".equals(key)) {
+              values.put(key, value == null ? "" : value);
+            }
+          });
+    }
+    this.placeholders = Collections.unmodifiableMap(values);
   }
 
   public String getEmail() {
