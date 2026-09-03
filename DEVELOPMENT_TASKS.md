@@ -133,17 +133,17 @@ The agent MUST update task status after completion.
 
 # 3. Phase 1 — Project Discovery
 
-## M1-001 — Inspect project structure
+## M1-001 — Inspect project structure [x]
 
-* [ ] Identify programming language/version.
-* [ ] Identify build system.
-* [ ] Identify application entry point.
-* [ ] Identify source directories.
-* [ ] Identify resources/configuration.
-* [ ] Identify test directories.
-* [ ] Identify dependency files.
-* [ ] Identify documentation.
-* [ ] Identify generated/build files.
+* [x] Identify programming language/version.
+* [x] Identify build system.
+* [x] Identify application entry point.
+* [x] Identify source directories.
+* [x] Identify resources/configuration.
+* [x] Identify test directories.
+* [x] Identify dependency files.
+* [x] Identify documentation.
+* [x] Identify generated/build files.
 
 ### Deliverable
 
