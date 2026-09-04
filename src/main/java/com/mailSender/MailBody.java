@@ -1,6 +1,7 @@
 package com.mailSender;
 
 import com.mailSender.excel.Contact;
+import com.mailSender.smtp.EmailSender;
 import com.mailSender.template.EmailTemplate;
 import com.mailSender.template.TemplateRenderer;
 import com.mailSender.template.TemplateValidator;
@@ -16,15 +17,15 @@ public class MailBody {
 
   private static final Logger log = LoggerFactory.getLogger(MailBody.class);
 
-  private final EmailService emailService;
+  private final EmailSender emailSender;
   private final MailAppProperties mailAppProperties;
   private final SentAddressLog sentAddressLog;
 
   public MailBody(
-      EmailService emailService,
+      EmailSender emailSender,
       MailAppProperties mailAppProperties,
       SentAddressLog sentAddressLog) {
-    this.emailService = emailService;
+    this.emailSender = emailSender;
     this.mailAppProperties = mailAppProperties;
     this.sentAddressLog = sentAddressLog;
   }
@@ -68,7 +69,7 @@ public class MailBody {
       }
       String emailBody = personalize(template, recipient);
       try {
-        emailService.sendEmail(email, emailBody);
+        emailSender.sendEmail(email, emailBody);
         sent++;
         String normalized = SentAddressLog.normalize(email);
         alreadySent.add(normalized);

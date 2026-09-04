@@ -476,7 +476,12 @@ Do NOT create a real `.env` containing credentials.
 
 ---
 
-# M1-011 — Extract EmailSender
+# M1-011 — Extract EmailSender [x]
+
+* [x] `EmailSender` interface; `SmtpEmailSender` is the SMTP implementation.
+* [x] `MailBody` depends on `EmailSender`, not a concrete SMTP type.
+* [x] Dry-run stays a flag inside `SmtpEmailSender` (no `JavaMailSender` call).
+* [x] Removed concrete `EmailService`.
 
 Create a dedicated interface:
 
@@ -506,7 +511,11 @@ SMTP Provider
 
 ---
 
-# M1-012 — SMTP error handling
+# M1-012 — SMTP error handling [x]
+
+* [x] Maps authentication, connection, timeout, invalid recipient, SMTP rejection, and configuration failures.
+* [x] Throws `SmtpSendException` with a short operator message (cause kept for debug logs, not printed as a stack trace to the user).
+* [x] Batch still continues after one send failure and logs the classified message.
 
 Handle common failures gracefully:
 
