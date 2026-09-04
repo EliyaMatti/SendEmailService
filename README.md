@@ -109,6 +109,33 @@ Or set `mail.batch-enabled=true` and `mail.dry-run=true` in `application-local.p
 
 You should see each To address and the filled-in body. Nothing is sent, and the sent-log file is not written.
 
+### 5b. Send a test email (one address, not the Excel list)
+
+This uses the configured SMTP account (unless dry-run is on), renders the body template, and sends **one** message to `mail.test-send-to`. It does **not** send to everyone in the Excel file, even if `mail.batch-enabled` is true.
+
+If `mail.excel-file-path` is set, placeholders (`{{name}}`, extra columns) come from the **first valid row**, but **To** is always the test address. If Excel is unset, the template is filled with the test address and name `Test`.
+
+Keep `mail.batch-enabled=false` (or leave it on; test-send still wins). Set:
+
+- `mail.test-send-enabled=true` / `MAIL_TEST_SEND_ENABLED=true`
+- `mail.test-send-to=you@example.com` / `MAIL_TEST_SEND_TO`
+- `mail.body-file-path` (required)
+- For a real SMTP test: `mail.dry-run=false` plus username, password, and `mail.from`
+
+Unix:
+
+```
+MAIL_TEST_SEND_ENABLED=true MAIL_TEST_SEND_TO=you@example.com MAIL_BODY_FILE_PATH=body.txt MAIL_DRY_RUN=true mvn spring-boot:run
+```
+
+PowerShell:
+
+```
+$env:MAIL_TEST_SEND_ENABLED="true"; $env:MAIL_TEST_SEND_TO="you@example.com"; $env:MAIL_BODY_FILE_PATH="body.txt"; $env:MAIL_DRY_RUN="true"; mvn spring-boot:run
+```
+
+Success logs `Test email sent successfully to …`. A send failure logs a short reason and the process exits non-zero. The sent-address log is **not** updated.
+
 ### 6. Send for real
 
 Use a test inbox first. You need SMTP username, password, from-address, and a non-blank sent-log path (default `sent-addresses.txt`, gitignored).
@@ -159,9 +186,11 @@ If the recipient list is empty after skipping blanks/invalid emails, the job log
 | `MAIL_BODY_FILE_PATH` | Body template text file | empty |
 | `MAIL_ATTACHMENT_PATH` | Optional attachment | empty |
 | `MAIL_BATCH_ENABLED` | Run send-on-startup batch | `false` |
+| `MAIL_TEST_SEND_ENABLED` | Send one test message instead of the Excel list | `false` |
+| `MAIL_TEST_SEND_TO` | Test-send recipient | empty |
 | `MAIL_DRY_RUN` | Print To + body; skip SMTP | `true` |
 | `MAIL_HTML` | Send body as HTML | `false` |
 | `MAIL_SENT_LOG_PATH` | File of already-sent addresses | `sent-addresses.txt` |
 | `MAIL_SEND_DELAY_MS` | Delay between real sends (ms) | `1000` |
 
-Defaults in `application.properties` match this table. Real SMTP runs only when the batch is enabled **and** dry-run is off. Host, port, username, password, from address, from name, and STARTTLS are bound into `SmtpConfiguration`; the password is never written to logs.
+Defaults in `application.properties` match this table. Real SMTP runs when dry-run is off **and** either the batch is enabled or test-send is enabled. Host, port, username, password, from address, from name, and STARTTLS are bound into `SmtpConfiguration`; the password is never written to logs.

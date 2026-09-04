@@ -11,12 +11,15 @@ import static org.mockito.Mockito.when;
 
 import com.mailSender.MailAppProperties;
 import com.mailSender.MailBodyAttachment;
+import com.mailSender.campaign.EmailMessage;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.javamail.JavaMailSender;
 
+/** SMTP failures become {@link SmtpSendException} with a short operator message. */
 class SmtpEmailSenderErrorTest {
 
   @Test
@@ -36,7 +39,12 @@ class SmtpEmailSenderErrorTest {
         new SmtpEmailSender(mailSender, properties, mock(MailBodyAttachment.class));
 
     SmtpSendException ex =
-        assertThrows(SmtpSendException.class, () -> sender.sendEmail("a@example.com", "body"));
+        assertThrows(
+            SmtpSendException.class,
+            () ->
+                sender.send(
+                    new EmailMessage(
+                        "a@example.com", "Hi", "body", "from@example.com", "", List.of())));
     assertTrue(ex.getMessage().contains("authentication failed"));
     assertFalse(ex.getMessage().contains("\n\tat "));
     assertEquals(MailAuthenticationException.class, ex.getCause().getClass());

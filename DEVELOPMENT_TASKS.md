@@ -532,7 +532,11 @@ The application must return useful errors instead of raw stack traces to the use
 
 # 12. Phase 4 — Email Sending Model
 
-# M1-013 — Create email message model
+# M1-013 — Create email message model [x]
+
+* [x] Domain object `EmailMessage` (`to`, `subject`, `body`, `from`, `replyTo`, `attachments`).
+* [x] Independent of SMTP/JavaMail types (`campaign` package).
+* [x] `EmailSender.send(EmailMessage)`; `SmtpEmailSender` maps the model onto MIME.
 
 Create a clean domain object representing an email.
 
@@ -553,7 +557,10 @@ Keep this independent from SMTP implementation details.
 
 ---
 
-# M1-014 — Separate email generation from email sending
+# M1-014 — Separate email generation from email sending [x]
+
+* [x] Pipeline: Contact → TemplateRenderer (`EmailComposer`) → `EmailMessage` → `EmailSender`.
+* [x] Compose and SMTP send are separate methods/types (no MIME in the composer).
 
 The application should follow:
 
@@ -575,7 +582,11 @@ Email creation and SMTP sending must NOT be mixed in one large method.
 
 ---
 
-# M1-015 — Add test-send functionality
+# M1-015 — Add test-send functionality [x]
+
+* [x] `MailBody.sendTestEmail` sends one rendered message to a specified address and returns success/failure.
+* [x] Uses configured SMTP (or dry-run); does not send the Excel list even if batch is on.
+* [x] `mail.test-send-enabled` / `mail.test-send-to` (`MAIL_TEST_SEND_ENABLED` / `MAIL_TEST_SEND_TO`).
 
 Create a clear method/workflow for sending one test email.
 
