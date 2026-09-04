@@ -2,6 +2,7 @@ package com.mailSender.smtp;
 
 import com.mailSender.MailAppProperties;
 import com.mailSender.MailBodyAttachment;
+import com.mailSender.campaign.EmailMessage;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,8 +11,8 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 /**
- * SMTP implementation of {@link EmailSender}. Dry-run logs To + body and does not call {@link
- * JavaMailSender}.
+ * SMTP implementation of {@link EmailSender}. Builds MIME from {@link EmailMessage}; dry-run logs
+ * To + body and does not call {@link JavaMailSender}.
  */
 @Component
 public class SmtpEmailSender implements EmailSender {
@@ -32,21 +33,25 @@ public class SmtpEmailSender implements EmailSender {
   }
 
   @Override
-  public void sendEmail(String to, String body) {
+  public void send(EmailMessage message) {
+    String to = message.getTo();
     if (mailAppProperties.isDryRun()) {
       log.info("DRY-RUN To: {}", to);
-      log.info("{}", body);
+      log.info("{}", message.getBody());
       return;
     }
     try {
-      MimeMessage message = mailSender.createMimeMessage();
-      MimeMessageHelper helper = new MimeMessageHelper(message, true);
-      helper.setFrom(mailAppProperties.getFrom());
+      MimeMessage mimeMessage = mailSender.createMimeMessage();
+      MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+      helper.setFrom(message.getFrom());
       helper.setTo(to);
-      helper.setSubject(mailAppProperties.getSubject());
-      helper.setText(body, mailAppProperties.isHtml());
-      mailBodyAttachment.addAttachment(helper);
-      mailSender.send(message);
+      helper.setSubject(message.getSubject());
+      helper.setText(message.getBody(), mailAppProperties.isHtml());
+      if (!message.getReplyTo().isBlank()) {
+        helper.setReplyTo(message.getReplyTo());
+      }
+      mailBodyAttachment.addAttachments(helper, message.getAttachments());
+      mailSender.send(mimeMessage);
       log.info("Sent message successfully to {}", to);
     } catch (SmtpSendException e) {
       throw e;

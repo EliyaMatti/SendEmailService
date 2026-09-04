@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+/** UTF-8 body file load via {@link MailBody#readFileContent(String)}. */
 class MailBodyReadFileTest {
 
   @TempDir Path tempDir;

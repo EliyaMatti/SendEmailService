@@ -6,6 +6,7 @@ import com.mailSender.excel.Contact;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
+/** Template personalization still delegates to {@link com.mailSender.template.TemplateRenderer}. */
 class MailBodyPersonalizeTest {
 
   @Test

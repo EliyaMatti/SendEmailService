@@ -2,6 +2,7 @@ package com.mailSender;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/** Binds `mail.*` settings (paths, dry-run, batch, test-send, delay). SMTP host/password live in SmtpConfiguration. */
 @ConfigurationProperties(prefix = "mail")
 public class MailAppProperties {
 
@@ -15,6 +16,8 @@ public class MailAppProperties {
   private boolean html = false;
   private String sentLogPath = "sent-addresses.txt";
   private long sendDelayMs = 1000;
+  private boolean testSendEnabled = false;
+  private String testSendTo = "";
 
   public String getFrom() {
     return from;
@@ -94,5 +97,21 @@ public class MailAppProperties {
 
   public void setSendDelayMs(long sendDelayMs) {
     this.sendDelayMs = sendDelayMs;
+  }
+
+  public boolean isTestSendEnabled() {
+    return testSendEnabled;
+  }
+
+  public void setTestSendEnabled(boolean testSendEnabled) {
+    this.testSendEnabled = testSendEnabled;
+  }
+
+  public String getTestSendTo() {
+    return testSendTo;
+  }
+
+  public void setTestSendTo(String testSendTo) {
+    this.testSendTo = testSendTo;
   }
 }

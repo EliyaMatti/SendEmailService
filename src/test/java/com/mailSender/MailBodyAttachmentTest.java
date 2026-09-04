@@ -5,28 +5,30 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mail.javamail.MimeMessageHelper;
 
+/** Attachment helper: omitted paths are ignored; a missing file fails that message. */
 class MailBodyAttachmentTest {
 
   @TempDir Path tempDir;
 
   @Test
   void omittedAttachmentPathIsIgnored() {
-    MailAppProperties properties = new MailAppProperties();
-    properties.setAttachmentPath("");
-    MailBodyAttachment attachment = new MailBodyAttachment(properties);
-    assertDoesNotThrow(() -> attachment.addAttachment(mock(MimeMessageHelper.class)));
+    MailBodyAttachment attachment = new MailBodyAttachment();
+    assertDoesNotThrow(() -> attachment.addAttachments(mock(MimeMessageHelper.class), List.of()));
   }
 
   @Test
   void missingAttachmentFileFails() {
-    MailAppProperties properties = new MailAppProperties();
-    properties.setAttachmentPath(tempDir.resolve("missing.pdf").toString());
-    MailBodyAttachment attachment = new MailBodyAttachment(properties);
+    MailBodyAttachment attachment = new MailBodyAttachment();
     MimeMessageHelper helper = mock(MimeMessageHelper.class);
-    assertThrows(RuntimeException.class, () -> attachment.addAttachment(helper));
+    assertThrows(
+        RuntimeException.class,
+        () ->
+            attachment.addAttachments(
+                helper, List.of(tempDir.resolve("missing.pdf").toString())));
   }
 }

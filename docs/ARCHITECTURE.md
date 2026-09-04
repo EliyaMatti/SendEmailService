@@ -6,13 +6,16 @@ The sketch in `DEVELOPMENT_TASKS.md` (ExcelMailPro `config` / `excel` / `templat
 
 ---
 
-## Current layout (after M1-005)
+## Current layout (after Phase 4 / M1-015)
 
 ```text
 com.mailSender
 ├── MailSenderApplication
 ├── MailAppProperties
-├── BatchMailRunner            # CLI: flags, preflight, ExcelReader + MailBody
+├── BatchMailRunner            # CLI: test-send or Excel batch
+├── campaign
+│   ├── EmailMessage           # to/subject/body/from/replyTo/attachments
+│   └── EmailComposer          # Contact + template → EmailMessage (no SMTP)
 ├── excel
 │   ├── ExcelReader
 │   ├── ExcelValidator
@@ -22,8 +25,14 @@ com.mailSender
 │   ├── EmailTemplate
 │   ├── TemplateRenderer
 │   └── TemplateValidator
-├── MailBody                   # campaign loop; delegates template load/render
-├── EmailService
+├── smtp
+│   ├── EmailSender            # send(EmailMessage)
+│   ├── SmtpEmailSender
+│   ├── SmtpFailureClassifier
+│   └── SmtpSendException
+├── config
+│   └── SmtpConfiguration
+├── MailBody                   # campaign loop + sendTestEmail
 ├── MailBodyAttachment
 └── SentAddressLog
 ```
@@ -31,11 +40,16 @@ com.mailSender
 Pipeline:
 
 ```text
-BatchMailRunner
-    → ExcelReader.read → ExcelReadResult (Contact[] + counts)
-    → MailBody (template + skip sent + delay + summary)
-        → EmailService → JavaMailSender | dry-run
+Excel file
+    → ExcelReader / ExcelValidator
+    → Contact
+    → EmailComposer (TemplateRenderer)
+    → EmailMessage
+    → EmailSender
+    → SmtpEmailSender | dry-run
 ```
+
+Test send: same pipeline for **one** address (`mail.test-send-to`); the Excel list is not mailed.
 
 ---
 

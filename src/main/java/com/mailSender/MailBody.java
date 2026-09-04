@@ -1,5 +1,7 @@
 package com.mailSender;
 
+import com.mailSender.campaign.EmailComposer;
+import com.mailSender.campaign.EmailMessage;
 import com.mailSender.excel.Contact;
 import com.mailSender.smtp.EmailSender;
 import com.mailSender.template.EmailTemplate;
@@ -12,6 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+/**
+ * Campaign send loop: skip already-sent addresses, compose an {@link EmailMessage}, then send it.
+ * Generation ({@link EmailComposer}) is separate from transport ({@link EmailSender}).
+ */
 @Component
 public class MailBody {
 
@@ -20,6 +26,7 @@ public class MailBody {
   private final EmailSender emailSender;
   private final MailAppProperties mailAppProperties;
   private final SentAddressLog sentAddressLog;
+  private final EmailComposer emailComposer;
 
   public MailBody(
       EmailSender emailSender,
@@ -28,6 +35,7 @@ public class MailBody {
     this.emailSender = emailSender;
     this.mailAppProperties = mailAppProperties;
     this.sentAddressLog = sentAddressLog;
+    this.emailComposer = new EmailComposer(mailAppProperties);
   }
 
   public static String readFileContent(String filePath) {
@@ -67,31 +75,58 @@ public class MailBody {
       if (delayNextAttempt) {
         sleepBetweenSends();
       }
-      String emailBody = personalize(template, recipient);
-      try {
-        emailSender.sendEmail(email, emailBody);
+      EmailMessage message = emailComposer.compose(recipient, template);
+      if (deliver(message, alreadySent)) {
         sent++;
-        String normalized = SentAddressLog.normalize(email);
-        alreadySent.add(normalized);
-        if (!mailAppProperties.isDryRun()) {
-          try {
-            sentAddressLog.record(email);
-          } catch (RuntimeException logError) {
-            log.warn(
-                "Sent log write failed after SMTP success for {}: {}",
-                email,
-                logError.getMessage());
-          }
-        }
-      } catch (RuntimeException e) {
+      } else {
         failed++;
-        log.warn("Failed to send to {}: {}", email, e.getMessage());
       }
       delayNextAttempt = shouldDelay();
     }
     log.info("Batch summary: sent={}, failed={}, skipped={}", sent, failed, skipped);
     if (failed > 0) {
       throw new IllegalStateException("Batch had " + failed + " send failure(s)");
+    }
+  }
+
+  /**
+   * Sends one rendered message to {@code recipient} (the test address). Does not walk the Excel
+   * list or write the sent-address log. Returns {@code true} on success and {@code false} on send
+   * failure.
+   */
+  public boolean sendTestEmail(String textFilePath, Contact recipient) {
+    String template = readFileContent(textFilePath);
+    TemplateValidator.validate(
+        mailAppProperties.getSubject(), template, placeholderKeysFrom(List.of(recipient)));
+    EmailMessage message = emailComposer.compose(recipient, template);
+    try {
+      emailSender.send(message);
+      log.info("Test email sent successfully to {}", recipient.getEmail());
+      return true;
+    } catch (RuntimeException e) {
+      log.warn("Test email failed to {}: {}", recipient.getEmail(), e.getMessage());
+      return false;
+    }
+  }
+
+  /** Hands a composed message to {@link EmailSender}; does not render the template. */
+  private boolean deliver(EmailMessage message, Set<String> alreadySent) {
+    String email = message.getTo();
+    try {
+      emailSender.send(message);
+      alreadySent.add(SentAddressLog.normalize(email));
+      if (!mailAppProperties.isDryRun()) {
+        try {
+          sentAddressLog.record(email);
+        } catch (RuntimeException logError) {
+          log.warn(
+              "Sent log write failed after SMTP success for {}: {}", email, logError.getMessage());
+        }
+      }
+      return true;
+    } catch (RuntimeException e) {
+      log.warn("Failed to send to {}: {}", email, e.getMessage());
+      return false;
     }
   }
 

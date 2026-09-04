@@ -2,8 +2,8 @@ package com.mailSender;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -11,6 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mailSender.campaign.EmailMessage;
 import com.mailSender.excel.Contact;
 import com.mailSender.smtp.EmailSender;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +22,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+/** Campaign loop tests: one failure continues, sent-log skip, dry-run does not record. */
 class MailBodySendLoopTest {
 
   @TempDir Path tempDir;
@@ -33,7 +35,7 @@ class MailBodySendLoopTest {
     EmailSender emailSender = mock(EmailSender.class);
     doThrow(new RuntimeException("smtp failed"))
         .when(emailSender)
-        .sendEmail(eq("a@example.com"), anyString());
+        .send(argThat(m -> m != null && "a@example.com".equals(m.getTo())));
 
     MailAppProperties properties = new MailAppProperties();
     properties.setSubject("Test subject");
@@ -54,9 +56,9 @@ class MailBodySendLoopTest {
                         new Contact("b@example.com", "Bob"))));
     assertTrue(ex.getMessage().contains("1 send failure"));
 
-    verify(emailSender).sendEmail(eq("a@example.com"), anyString());
-    verify(emailSender).sendEmail(eq("b@example.com"), anyString());
-    verify(emailSender, times(2)).sendEmail(anyString(), anyString());
+    verify(emailSender).send(argThat(m -> "a@example.com".equals(m.getTo())));
+    verify(emailSender).send(argThat(m -> "b@example.com".equals(m.getTo())));
+    verify(emailSender, times(2)).send(any(EmailMessage.class));
     verify(sentLog).record("b@example.com");
     verify(sentLog, never()).record("a@example.com");
   }
@@ -81,8 +83,8 @@ class MailBodySendLoopTest {
             new Contact("a@example.com", "Ada"),
             new Contact("b@example.com", "Bob")));
 
-    verify(emailSender, never()).sendEmail(eq("a@example.com"), anyString());
-    verify(emailSender).sendEmail(eq("b@example.com"), anyString());
+    verify(emailSender, never()).send(argThat(m -> m != null && "a@example.com".equals(m.getTo())));
+    verify(emailSender).send(argThat(m -> "b@example.com".equals(m.getTo())));
   }
 
   @Test
@@ -102,8 +104,14 @@ class MailBodySendLoopTest {
     mailBody.sendPersonalizedEmails(
         body.toString(), List.of(new Contact("a@example.com", "Ada")));
 
-    verify(emailSender).sendEmail(eq("a@example.com"), anyString());
-    verify(sentLog, never()).record(anyString());
+    verify(emailSender)
+        .send(
+            argThat(
+                m ->
+                    "a@example.com".equals(m.getTo())
+                        && "Test subject".equals(m.getSubject())
+                        && m.getBody().contains("Ada")));
+    verify(sentLog, never()).record(any());
   }
 
   @Test
@@ -126,8 +134,8 @@ class MailBodySendLoopTest {
             new Contact("Ada@Example.com", "Ada"),
             new Contact("ada@example.com", "Ada again")));
 
-    verify(emailSender, times(1)).sendEmail(eq("Ada@Example.com"), anyString());
-    verify(emailSender, never()).sendEmail(eq("ada@example.com"), anyString());
+    verify(emailSender, times(1)).send(argThat(m -> "Ada@Example.com".equals(m.getTo())));
+    verify(emailSender, never()).send(argThat(m -> m != null && "ada@example.com".equals(m.getTo())));
     verify(sentLog).record("Ada@Example.com");
   }
 
@@ -152,8 +160,8 @@ class MailBodySendLoopTest {
             new Contact("a@example.com", "Ada"),
             new Contact("b@example.com", "Bob")));
 
-    verify(emailSender).sendEmail(eq("a@example.com"), anyString());
-    verify(emailSender).sendEmail(eq("b@example.com"), anyString());
+    verify(emailSender).send(argThat(m -> "a@example.com".equals(m.getTo())));
+    verify(emailSender).send(argThat(m -> "b@example.com".equals(m.getTo())));
     verify(sentLog).record("a@example.com");
     verify(sentLog).record("b@example.com");
   }
@@ -173,9 +181,9 @@ class MailBodySendLoopTest {
     MailBody mailBody = new MailBody(emailSender, properties, sentLog);
     mailBody.sendPersonalizedEmails(body.toString(), List.of());
 
-    verify(emailSender, never()).sendEmail(anyString(), anyString());
+    verify(emailSender, never()).send(any(EmailMessage.class));
     verify(sentLog, never()).load();
-    verify(sentLog, never()).record(anyString());
+    verify(sentLog, never()).record(any());
   }
 
   @Test
@@ -198,6 +206,6 @@ class MailBodySendLoopTest {
                 mailBody.sendPersonalizedEmails(
                     body.toString(), List.of(new Contact("a@example.com", "Ada"))));
     assertTrue(ex.getMessage().contains("Placeholder {{Company}} does not exist"));
-    verify(emailSender, never()).sendEmail(anyString(), anyString());
+    verify(emailSender, never()).send(any(EmailMessage.class));
   }
 }

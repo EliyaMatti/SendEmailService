@@ -16,3 +16,6 @@ mail.dry-run=true
 mail.html=false
 mail.sent-log-path=sent-addresses.txt
 mail.send-delay-ms=1000
+# One message to mail.test-send-to using the template; does not send the Excel list.
+mail.test-send-enabled=false
+mail.test-send-to=

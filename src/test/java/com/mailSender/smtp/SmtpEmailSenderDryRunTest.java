@@ -5,9 +5,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.mailSender.MailAppProperties;
 import com.mailSender.MailBodyAttachment;
+import com.mailSender.campaign.EmailMessage;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.mail.javamail.JavaMailSender;
 
+/** Dry-run must not touch JavaMailSender or attachments. */
 class SmtpEmailSenderDryRunTest {
 
   @Test
@@ -18,7 +21,8 @@ class SmtpEmailSenderDryRunTest {
     properties.setDryRun(true);
 
     EmailSender emailSender = new SmtpEmailSender(mailSender, properties, attachment);
-    emailSender.sendEmail("a@example.com", "Hello {{name}}");
+    emailSender.send(
+        new EmailMessage("a@example.com", "Hi", "Hello {{name}}", "from@example.com", "", List.of()));
 
     verifyNoInteractions(mailSender);
     verifyNoInteractions(attachment);
