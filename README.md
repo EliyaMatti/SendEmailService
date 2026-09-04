@@ -129,6 +129,8 @@ $env:MAIL_BATCH_ENABLED="true"; $env:MAIL_DRY_RUN="false"; $env:MAIL_SENT_LOG_PA
 
 There is a pause of `mail.send-delay-ms` (default 1000) between real send attempts (not after the last, and not in dry-run).
 
+A failed send logs a short reason (authentication, connection, timeout, invalid recipient, SMTP rejection, or configuration) instead of a raw stack trace. One failure does not stop later recipients. Enable debug logging on `com.mailSender.smtp` if you need the underlying exception.
+
 ### Sent log and re-runs
 
 Successful To-addresses are appended to `mail.sent-log-path` and skipped on later runs. Dry-run does not write that log, but it still **skips addresses already recorded** there, so a re-run preview hides those rows.
