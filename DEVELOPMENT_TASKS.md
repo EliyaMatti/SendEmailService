@@ -603,16 +603,16 @@ This must NOT automatically send the full Excel list.
 
 # 13. Phase 5 — Configuration
 
-# M1-016 — Centralize configuration
+# M1-016 — Centralize configuration [x]
 
 Remove scattered configuration values.
 
 Centralize:
 
-* SMTP settings
-* Input file location
-* Logging configuration
-* Sending configuration
+* [x] SMTP settings (`spring.mail.*` → Spring `MailProperties` / `SmtpConfiguration`)
+* [x] Input file location (`mail.excel-file-path`, `mail.body-file-path`, `mail.attachment-path`, `mail.sent-log-path`)
+* [x] Logging configuration (`logging.level.root`, `logging.level.com.mailSender`, `logging.level.com.mailSender.smtp`)
+* [x] Sending configuration (`mail.batch-enabled`, `mail.dry-run`, `mail.html`, `mail.send-delay-ms`, test-send)
 
 Avoid magic values such as:
 
@@ -620,15 +620,14 @@ Avoid magic values such as:
 Thread.sleep(60000);
 ```
 
-Use named configuration:
-
-```text
-sending.delay
-```
+Use named configuration (`mail.send-delay-ms` / `MAIL_SEND_DELAY_MS`). Verified with `mvn -q test` (batch off / dry-run / mocked `JavaMailSender`; no live SMTP).
 
 ---
 
-# M1-017 — Environment-specific configuration
+# M1-017 — Environment-specific configuration [x]
+
+* [x] Spring profiles `development` (default) and `production`.
+* [x] Production credentials are not in source control (env / gitignored local properties only).
 
 Create support for:
 
@@ -637,13 +636,18 @@ development
 production
 ```
 
-Do not include production credentials in source control.
+Do not include production credentials in source control. Verified with `mvn -q test` (no live SMTP).
 
 ---
 
 # 14. Phase 6 — Logging
 
-# M1-018 — Implement structured logging
+# M1-018 — Implement structured logging [x]
+
+* [x] Application startup and shutdown (`ApplicationLifecycleLogger`)
+* [x] Excel file loaded plus total / valid contacts / invalid contacts / duplicates
+* [x] SMTP connection ready (host/port/tls/auth, never password) or skipped in dry-run
+* [x] Campaign processing started; email sent successfully; email delivery failed
 
 Log:
 
@@ -675,11 +679,19 @@ INFO  Email sent successfully
 ERROR Email delivery failed
 ```
 
+Verified with `mvn -q test` (no live SMTP).
+
 ---
 
 # 15. Phase 7 — Error Handling
 
-# M1-019 — Centralize exceptions
+# M1-019 — Centralize exceptions [x]
+
+* [x] `ExcelProcessingException` for Excel file/structure failures
+* [x] `TemplateValidationException` for body file and placeholder/subject/body validation
+* [x] `SmtpConfigurationException` for missing SMTP/from/sent-log/attachment/test-send settings
+* [x] `EmailSendingException` for campaign/send/sent-log/attachment I/O; `SmtpSendException` extends it
+* [x] No `InvalidContactException` — invalid/duplicate Excel rows are skipped, not thrown
 
 Create meaningful custom exceptions where appropriate.
 
@@ -693,11 +705,15 @@ EmailSendingException
 SmtpConfigurationException
 ```
 
-Do not create unnecessary custom exceptions.
+Do not create unnecessary custom exceptions. Verified with `mvn -q test` (no live SMTP).
 
 ---
 
-# M1-020 — User-friendly error messages
+# M1-020 — User-friendly error messages [x]
+
+* [x] Operator messages use plain sentences (`Unable to process the Excel file because the Email column was not found.`).
+* [x] Unexpected failures (including `NullPointerException`) are logged with a stack trace and rethrown as `EmailSendingException` without the exception class name in the user message.
+* [x] SMTP classifier no longer appends raw provider text for configuration errors.
 
 Replace technical errors where possible.
 
@@ -713,7 +729,7 @@ Better:
 Unable to process the Excel file because the Email column was not found.
 ```
 
-Keep technical details in logs.
+Keep technical details in logs. Verified with `mvn -q test` (no live SMTP).
 
 ---
 
@@ -1052,56 +1068,89 @@ Milestone 1 is complete ONLY when all of the following are true:
 
 # 22. Agent Final Report
 
-When all tasks are complete, the agent MUST produce a final report containing:
+**Scope of this write-up (2026-09-04):** M1-016 through M1-020 only. Earlier IDs M1-001–M1-015 are already `[x]`. IDs **M1-021–M1-035 are not complete**. §21 Definition of Done is **not** claimed.
+
+When remaining Milestone 1 tasks finish, replace this slice with a full M1-001–M1-035 report.
 
 ## Completed
 
-List every completed task.
+**This pass (M1-016–M1-020):**
+
+* M1-016 — Centralize configuration (`MailAppProperties` / `mail.*`, `MailProperties` SMTP, `mail.send-delay-ms`)
+* M1-017 — `development` / `production` profiles; no passwords in committed profile files
+* M1-018 — Structured logs (startup/shutdown, Excel counts, SMTP ready/skipped without password, campaign/send/fail)
+* M1-019 — Typed exceptions (`ExcelProcessingException`, `TemplateValidationException`, `SmtpConfigurationException`, `EmailSendingException` / `SmtpSendException`)
+* M1-020 — Operator-facing messages; stack traces stay in logs (including unexpected NPE wrap)
+
+**Already complete before this pass:** M1-001 through M1-015 (discovery, Excel/template/SMTP extraction, credentials, EmailSender, test-send).
 
 ## Files Changed
 
-List all created/modified/deleted files.
+Primary artifacts for M1-016–M1-020 (created or updated):
+
+* `src/main/java/com/mailSender/config/MailAppProperties.java`
+* `src/main/java/com/mailSender/config/SmtpConfiguration.java`
+* `src/main/java/com/mailSender/config/ApplicationLifecycleLogger.java`
+* `src/main/java/com/mailSender/config/SmtpConfigurationException.java`
+* `src/main/java/com/mailSender/excel/ExcelProcessingException.java`
+* `src/main/java/com/mailSender/template/TemplateValidationException.java`
+* `src/main/java/com/mailSender/smtp/EmailSendingException.java`
+* `src/main/resources/application.properties`
+* `src/main/resources/application-development.properties`
+* `src/main/resources/application-production.properties`
+* `src/main/java/com/mailSender/MailSenderApplication.java`
+* `src/main/java/com/mailSender/BatchMailRunner.java`
+* `src/main/java/com/mailSender/MailBody.java`
+* `src/main/java/com/mailSender/excel/ExcelReader.java`
+* `src/main/java/com/mailSender/excel/ExcelValidator.java`
+* `src/main/java/com/mailSender/smtp/SmtpEmailSender.java`
+* `src/main/java/com/mailSender/smtp/SmtpFailureClassifier.java`
+* Tests under `src/test/java/com/mailSender/config/` plus updates to `BatchMailRunnerTest` and related exception tests
+* `README.md`, `.env.example`, `src/main/resources/application-local.properties.example`
 
 ## Architecture Changes
 
-Explain the before/after architecture.
+**Before:** SMTP and campaign settings were scattered (`@Value`, hardcoded delay, Gmail defaults mixed into beans). Logging was ad hoc. Failures often used `IllegalStateException`. Operator messages mixed stack/provider text.
+
+**After:** `mail.*` binds through `MailAppProperties`; Spring `MailProperties` plus `SmtpConfiguration` describe SMTP (password never in `toString()`). Profiles `development` and `production` exist without committed secrets. Lifecycle and campaign events use named SLF4J messages. Failures use the typed exceptions above. Users see short sentences; details stay in logs. Pipeline is unchanged: Excel → Contact → template/`EmailComposer` → `EmailMessage` → `EmailSender` / `SmtpEmailSender`. Default batch remains off; dry-run remains the safe path.
 
 ## Tests
 
-Report:
+Verified 2026-09-04 with `mvn -q test` (no live SMTP; `JavaMailSender` mocked in Spring tests; dry-run paths do not send).
 
 ```text
-Total tests
-Passed
-Failed
-Skipped
-Coverage
+Total tests: 88
+Passed: 88
+Failed: 0
+Skipped: 0
+Coverage: not measured (Jacoco is not in pom.xml; M1-023 still open)
 ```
 
 ## Security
 
-Confirm:
-
 ```text
-Credentials removed: YES/NO
-Secrets committed: YES/NO
-Environment configuration: YES/NO
+Credentials removed: YES (no App Passwords in committed properties/profiles)
+Secrets committed: NO (application-local.properties / .env remain gitignored; examples use placeholders)
+Environment configuration: YES (MAIL_* / spring.mail.* / mail.*)
 ```
+
+I1 (rotate any previously leaked Gmail App Password) remains a Google Account action for the user.
 
 ## Known Issues
 
-List remaining technical debt.
+* M1-021–M1-035 still open (Excel/template/validation/EmailSender test gaps vs task bullets, coverage gate, e2e/regression docs, cleanup, deps, verify, secret scan, architecture review, `docs/NEXT_MILESTONE.md`).
+* Coverage not reported until Jacoco or an equivalent is added (M1-023).
+* Possible leftover duplicate types from the refactor (cleanup is M1-029).
+* Production profile still defaults batch off / dry-run on unless env overrides (intentional safety).
 
 ## Milestone 2 Readiness
 
-Answer:
-
 ```text
 Is the project ready for Spring Boot/SaaS development?
-YES / NO
+NO
 
 If NO:
-List blockers.
+Milestone 1 IDs M1-021–M1-035 are unfinished. Do not start APIs, auth, PostgreSQL, or payments.
 ```
 
 ---

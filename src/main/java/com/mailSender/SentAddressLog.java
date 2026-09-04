@@ -1,5 +1,7 @@
 package com.mailSender;
 
+import com.mailSender.config.MailAppProperties;
+import com.mailSender.smtp.EmailSendingException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -10,10 +12,14 @@ import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SentAddressLog {
+
+  private static final Logger log = LoggerFactory.getLogger(SentAddressLog.class);
 
   private final MailAppProperties mailAppProperties;
 
@@ -32,7 +38,9 @@ public class SentAddressLog {
           .filter(s -> !s.isEmpty())
           .collect(Collectors.collectingAndThen(Collectors.toCollection(LinkedHashSet::new), Collections::unmodifiableSet));
     } catch (IOException e) {
-      throw new IllegalStateException("Cannot read sent log: " + path, e);
+      log.debug("Cannot read sent log {}", path, e);
+      throw new EmailSendingException(
+          "Unable to read the sent-address log. Check mail.sent-log-path and file permissions.", e);
     }
   }
 
@@ -53,7 +61,9 @@ public class SentAddressLog {
           StandardOpenOption.CREATE,
           StandardOpenOption.APPEND);
     } catch (IOException e) {
-      throw new IllegalStateException("Cannot write sent log: " + path, e);
+      log.debug("Cannot write sent log {}", path, e);
+      throw new EmailSendingException(
+          "Unable to write the sent-address log. Check mail.sent-log-path and file permissions.", e);
     }
   }
 

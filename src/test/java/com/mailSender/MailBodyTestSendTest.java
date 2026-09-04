@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mailSender.campaign.EmailMessage;
+import com.mailSender.config.MailAppProperties;
 import com.mailSender.excel.Contact;
 import com.mailSender.smtp.EmailSender;
 import java.nio.charset.StandardCharsets;

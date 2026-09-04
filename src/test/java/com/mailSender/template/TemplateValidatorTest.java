@@ -11,9 +11,9 @@ class TemplateValidatorTest {
 
   @Test
   void emptySubjectFails() {
-    IllegalStateException ex =
+    TemplateValidationException ex =
         assertThrows(
-            IllegalStateException.class,
+            TemplateValidationException.class,
             () -> TemplateValidator.validate("  ", "Hi {{name}}", Set.of("email", "name")));
     assertTrue(ex.getMessage().contains("Template validation failed"));
     assertTrue(ex.getMessage().contains("Subject is empty"));
@@ -21,27 +21,27 @@ class TemplateValidatorTest {
 
   @Test
   void emptyBodyFails() {
-    IllegalStateException ex =
+    TemplateValidationException ex =
         assertThrows(
-            IllegalStateException.class,
+            TemplateValidationException.class,
             () -> TemplateValidator.validate("Hello", "\n  \n", Set.of("email", "name")));
     assertTrue(ex.getMessage().contains("Body is empty"));
   }
 
   @Test
   void missingRequiredFieldsFails() {
-    IllegalStateException ex =
+    TemplateValidationException ex =
         assertThrows(
-            IllegalStateException.class,
+            TemplateValidationException.class,
             () -> TemplateValidator.validate("Hello", "Hi", Set.of("company")));
     assertTrue(ex.getMessage().contains("required fields: email and name"));
   }
 
   @Test
   void invalidPlaceholderSyntaxFails() {
-    IllegalStateException ex =
+    TemplateValidationException ex =
         assertThrows(
-            IllegalStateException.class,
+            TemplateValidationException.class,
             () ->
                 TemplateValidator.validate(
                     "Hello", "Hi {{name", Set.of("email", "name")));
@@ -50,9 +50,9 @@ class TemplateValidatorTest {
 
   @Test
   void unsupportedPlaceholderFailsWithUsefulMessage() {
-    IllegalStateException ex =
+    TemplateValidationException ex =
         assertThrows(
-            IllegalStateException.class,
+            TemplateValidationException.class,
             () ->
                 TemplateValidator.validate(
                     "Hello",

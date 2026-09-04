@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.mail.MailProperties;
 
 class SmtpConfigurationTest {
 
@@ -39,7 +40,30 @@ class SmtpConfigurationTest {
     assertEquals("from@example.com", config.getFromEmail());
     assertEquals("From Name", config.getFromName());
     assertFalse(config.isTlsEnabled());
+    assertTrue(config.isAuthEnabled());
     assertTrue(config.isReadyForSend());
+  }
+
+  @Test
+  void bindsFromSpringMailPropertiesAndMailAppProperties() {
+    MailProperties mail = new MailProperties();
+    mail.setHost("smtp.example.com");
+    mail.setPort(465);
+    mail.setUsername("user");
+    mail.setPassword("secret");
+    mail.getProperties().put("mail.smtp.starttls.enable", "false");
+    mail.getProperties().put("mail.smtp.auth", "false");
+    MailAppProperties app = new MailAppProperties();
+    app.setFrom("from@example.com");
+    app.setFromName("From Name");
+    SmtpConfiguration config = new SmtpConfiguration(mail, app);
+    assertEquals("smtp.example.com", config.getHost());
+    assertEquals(465, config.getPort());
+    assertEquals("user", config.getUsername());
+    assertEquals("from@example.com", config.getFromEmail());
+    assertEquals("From Name", config.getFromName());
+    assertFalse(config.isTlsEnabled());
+    assertFalse(config.isAuthEnabled());
   }
 
   @Test

@@ -100,8 +100,8 @@ class SmtpFailureClassifierTest {
     String message =
         SmtpFailureClassifier.userMessage(
             "a@example.com", new MailParseException("Failed to parse address"));
-    assertTrue(message.startsWith("SMTP configuration error"));
-    assertFalse(message.contains("at org.springframework"));
+    assertTrue(message.startsWith("Unable to send the message because of an SMTP configuration problem"));
+    assertFalse(message.contains("Failed to parse address"));
   }
 
   @Test
@@ -109,15 +109,15 @@ class SmtpFailureClassifierTest {
     String message =
         SmtpFailureClassifier.userMessage(
             "a@example.com", new RuntimeException("Cannot read file: C:\\missing.pdf"));
-    assertTrue(message.contains("SMTP configuration error"));
-    assertTrue(message.contains("Cannot read file"));
+    assertTrue(message.contains("SMTP configuration problem"));
+    assertFalse(message.contains("C:\\missing.pdf"));
   }
 
   @Test
   void unknownFailureKeepsShortMessage() {
     String message =
         SmtpFailureClassifier.userMessage("a@example.com", new IllegalStateException("boom"));
-    assertEquals("Failed to send email to a@example.com.", message);
+    assertEquals("Unable to send email to a@example.com.", message);
   }
 
   private static void assertNoStackTrace(String message) {

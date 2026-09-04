@@ -43,7 +43,7 @@ Invalid: 18
 Duplicates: 10
 ```
 
-A missing file, empty workbook, or non-`.xlsx` path fails before any mail is sent.
+The same counts are also logged (`Valid contacts` / `Invalid contacts`). A missing file, empty workbook, or non-`.xlsx` path fails before any mail is sent.
 
 ### 2. Write the body template
 
@@ -134,7 +134,7 @@ PowerShell:
 $env:MAIL_TEST_SEND_ENABLED="true"; $env:MAIL_TEST_SEND_TO="you@example.com"; $env:MAIL_BODY_FILE_PATH="body.txt"; $env:MAIL_DRY_RUN="true"; mvn spring-boot:run
 ```
 
-Success logs `Test email sent successfully to …`. A send failure logs a short reason and the process exits non-zero. The sent-address log is **not** updated.
+Success logs `Email sent successfully`. A send failure logs `Email delivery failed` with a short reason (not a stack trace). The sent-address log is **not** updated.
 
 ### 6. Send for real
 
@@ -156,7 +156,15 @@ $env:MAIL_BATCH_ENABLED="true"; $env:MAIL_DRY_RUN="false"; $env:MAIL_SENT_LOG_PA
 
 There is a pause of `mail.send-delay-ms` (default 1000) between real send attempts (not after the last, and not in dry-run).
 
-A failed send logs a short reason (authentication, connection, timeout, invalid recipient, SMTP rejection, or configuration) instead of a raw stack trace. One failure does not stop later recipients. Enable debug logging on `com.mailSender.smtp` if you need the underlying exception.
+A failed send logs `Email delivery failed` with a short reason (authentication, connection, timeout, invalid recipient, SMTP rejection, or configuration) instead of a raw stack trace. One failure does not stop later recipients. Enable debug logging on `com.mailSender.smtp` if you need the underlying exception.
+
+### Logging
+
+The app logs: application startup and shutdown; Excel file loaded plus total / valid / invalid / duplicate counts; SMTP connection ready (host, port, TLS, auth — **never** the password) or SMTP skipped in dry-run; campaign processing started; email sent successfully; email delivery failed; batch summary.
+
+Do not expect passwords, tokens, or extra Excel columns in logs. To-addresses appear for skip/dry-run/invalid-row diagnostics only.
+
+Operator-facing errors are plain sentences (for example `Unable to process the Excel file because the Email column was not found.`). Exception class names and stack traces stay in the log.
 
 ### Sent log and re-runs
 
@@ -166,16 +174,23 @@ If the recipient list is empty after skipping blanks/invalid emails, the job log
 
 ## Configuration
 
+Named settings live in `src/main/resources/application.properties` (grouped: SMTP, files, sending, logging). Campaign keys bind to `MailAppProperties`; SMTP host, port, credentials, and STARTTLS bind to `SmtpConfiguration`. Inter-send pause is `mail.send-delay-ms` (env `MAIL_SEND_DELAY_MS`) — there is no hardcoded `Thread.sleep(60000)`. Logging levels are `logging.level.root` and `logging.level.com.mailSender`.
+
+The default Spring profile is **`development`**. Use **`production`** for a deploy-shaped config that still contains **no passwords**. Activate with `SPRING_PROFILES_ACTIVE=production` or `--spring.profiles.active=production`. Put real credentials only in the environment or gitignored `application-local.properties`. Both profiles keep batch off and dry-run on unless you override those flags.
+
 ### Environment variables
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
+| `SPRING_PROFILES_ACTIVE` | Spring profile (`development` or `production`) | `development` (via `spring.profiles.default`) |
 | `MAIL_USERNAME` | SMTP username | empty |
 | `MAIL_PASSWORD` | SMTP password (Gmail App Password) | empty |
 | `MAIL_HOST` | SMTP host | `smtp.gmail.com` |
 | `MAIL_PORT` | SMTP port | `587` |
 | `MAIL_FROM` | From address | SMTP username |
-| `MAIL_FROM_NAME` | Optional From display name (`mail.from-name`; SMTP config only) | empty |
+| `MAIL_FROM_NAME` | Optional From display name (`mail.from-name`) | empty |
+| `MAIL_SMTP_AUTH` | SMTP AUTH (`spring.mail.properties.mail.smtp.auth`) | `true` |
+| `MAIL_SMTP_STARTTLS` | STARTTLS (`spring.mail.properties.mail.smtp.starttls.enable`) | `true` |
 | `SMTP_HOST` | Alias for `MAIL_HOST` if `MAIL_HOST` is unset | `smtp.gmail.com` |
 | `SMTP_PORT` | Alias for `MAIL_PORT` if `MAIL_PORT` is unset | `587` |
 | `SMTP_USERNAME` | Alias for `MAIL_USERNAME` if `MAIL_USERNAME` is unset | empty |
@@ -191,6 +206,11 @@ If the recipient list is empty after skipping blanks/invalid emails, the job log
 | `MAIL_DRY_RUN` | Print To + body; skip SMTP | `true` |
 | `MAIL_HTML` | Send body as HTML | `false` |
 | `MAIL_SENT_LOG_PATH` | File of already-sent addresses | `sent-addresses.txt` |
-| `MAIL_SEND_DELAY_MS` | Delay between real sends (ms) | `1000` |
+| `MAIL_SEND_DELAY_MS` | Delay between real sends (`mail.send-delay-ms`; not a hardcoded sleep) | `1000` |
+| `LOGGING_LEVEL_ROOT` | Root log level | `INFO` |
+| `LOGGING_LEVEL_MAILSENDER` | `com.mailSender` log level | `INFO` |
+| `LOGGING_LEVEL_SMTP` | `com.mailSender.smtp` log level | `INFO` |
 
-Defaults in `application.properties` match this table. Real SMTP runs when dry-run is off **and** either the batch is enabled or test-send is enabled. Host, port, username, password, from address, from name, and STARTTLS are bound into `SmtpConfiguration`; the password is never written to logs.
+Defaults in `application.properties` match this table. Real SMTP runs when dry-run is off **and** either the batch is enabled or test-send is enabled. SMTP connection settings bind through Spring `MailProperties` into `SmtpConfiguration`; campaign paths and sending flags bind through `MailAppProperties`. The SMTP password is never written to logs.
+
+Failures use typed runtime exceptions (`ExcelProcessingException`, `TemplateValidationException`, `SmtpConfigurationException`, `EmailSendingException`) with the same operator messages as before. Invalid Excel rows are skipped rather than thrown (`InvalidContactException` is not used).

@@ -1,6 +1,6 @@
 package com.mailSender.campaign;
 
-import com.mailSender.MailAppProperties;
+import com.mailSender.config.MailAppProperties;
 import com.mailSender.excel.Contact;
 import com.mailSender.template.TemplateRenderer;
 import java.util.List;

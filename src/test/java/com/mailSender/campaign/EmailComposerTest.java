@@ -2,7 +2,7 @@ package com.mailSender.campaign;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.mailSender.MailAppProperties;
+import com.mailSender.config.MailAppProperties;
 import com.mailSender.excel.Contact;
 import java.util.Map;
 import org.junit.jupiter.api.Test;

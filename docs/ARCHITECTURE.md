@@ -6,33 +6,38 @@ The sketch in `DEVELOPMENT_TASKS.md` (ExcelMailPro `config` / `excel` / `templat
 
 ---
 
-## Current layout (after Phase 4 / M1-015)
+## Current layout (after M1-016)
 
 ```text
 com.mailSender
 ├── MailSenderApplication
-├── MailAppProperties
 ├── BatchMailRunner            # CLI: test-send or Excel batch
 ├── campaign
-│   ├── EmailMessage           # to/subject/body/from/replyTo/attachments
-│   └── EmailComposer          # Contact + template → EmailMessage (no SMTP)
+│   ├── EmailMessage
+│   └── EmailComposer
 ├── excel
 │   ├── ExcelReader
 │   ├── ExcelValidator
 │   ├── ExcelReadResult
+│   ├── ExcelProcessingException
 │   └── Contact
 ├── template
 │   ├── EmailTemplate
 │   ├── TemplateRenderer
-│   └── TemplateValidator
+│   ├── TemplateValidator
+│   └── TemplateValidationException
 ├── smtp
-│   ├── EmailSender            # send(EmailMessage)
+│   ├── EmailSender
 │   ├── SmtpEmailSender
 │   ├── SmtpFailureClassifier
-│   └── SmtpSendException
+│   ├── SmtpSendException
+│   └── EmailSendingException
 ├── config
-│   └── SmtpConfiguration
-├── MailBody                   # campaign loop + sendTestEmail
+│   ├── MailAppProperties      # mail.* files, sending, envelope
+│   ├── SmtpConfiguration      # spring.mail.* + mail.from / from-name
+│   ├── SmtpConfigurationException
+│   └── ApplicationLifecycleLogger
+├── MailBody
 ├── MailBodyAttachment
 └── SentAddressLog
 ```
@@ -145,7 +150,7 @@ Excel file
 | `SentAddressLog` | stay in campaign (file I/O, not SLF4J) | already exists; move with campaign |
 | `BatchMailRunner` | `application` orchestrator | stays; thinner after extracts |
 | `MailAppProperties` | `config` (paths, delay, html, dry-run, batch) | M1-016 |
-| `IllegalStateException` / `RuntimeException` | typed exceptions where they help operators | M1-019 |
+| `IllegalStateException` / `RuntimeException` | typed `ExcelProcessingException`, `TemplateValidationException`, `SmtpConfigurationException`, `EmailSendingException` (`SmtpSendException` subclass) | M1-019 |
 
 Rename only when extracting. Call sites and tests update in the same ID as the move.
 
@@ -168,6 +173,7 @@ Rename only when extracting. Call sites and tests update in the same ID as the m
 - Dry-run must not call `JavaMailSender` and must not append the sent-log
 - Per-recipient send failures continue the loop; process fails at end if any failed
 - No secrets in git; password never logged
+- Profiles: default `development`; `production` has no credentials in the committed file
 
 ---
 

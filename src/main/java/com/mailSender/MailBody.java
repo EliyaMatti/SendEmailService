@@ -2,8 +2,10 @@ package com.mailSender;
 
 import com.mailSender.campaign.EmailComposer;
 import com.mailSender.campaign.EmailMessage;
+import com.mailSender.config.MailAppProperties;
 import com.mailSender.excel.Contact;
 import com.mailSender.smtp.EmailSender;
+import com.mailSender.smtp.EmailSendingException;
 import com.mailSender.template.EmailTemplate;
 import com.mailSender.template.TemplateRenderer;
 import com.mailSender.template.TemplateValidator;
@@ -54,6 +56,7 @@ public class MailBody {
       String textFilePath, List<Contact> recipients, Set<String> placeholderKeys) {
     String template = readFileContent(textFilePath);
     TemplateValidator.validate(mailAppProperties.getSubject(), template, placeholderKeys);
+    log.info("Campaign processing started");
     if (recipients == null || recipients.isEmpty()) {
       log.warn(
           "No recipients to send: Excel had no usable rows (header-only or all rows skipped).");
@@ -85,7 +88,10 @@ public class MailBody {
     }
     log.info("Batch summary: sent={}, failed={}, skipped={}", sent, failed, skipped);
     if (failed > 0) {
-      throw new IllegalStateException("Batch had " + failed + " send failure(s)");
+      throw new EmailSendingException(
+          "Unable to finish the campaign because "
+              + failed
+              + " message(s) could not be sent. See earlier log lines for the reason.");
     }
   }
 
@@ -101,10 +107,9 @@ public class MailBody {
     EmailMessage message = emailComposer.compose(recipient, template);
     try {
       emailSender.send(message);
-      log.info("Test email sent successfully to {}", recipient.getEmail());
       return true;
     } catch (RuntimeException e) {
-      log.warn("Test email failed to {}: {}", recipient.getEmail(), e.getMessage());
+      log.error("Email delivery failed: {}", e.getMessage());
       return false;
     }
   }
@@ -125,7 +130,7 @@ public class MailBody {
       }
       return true;
     } catch (RuntimeException e) {
-      log.warn("Failed to send to {}: {}", email, e.getMessage());
+      log.error("Email delivery failed: {}", e.getMessage());
       return false;
     }
   }
@@ -152,7 +157,8 @@ public class MailBody {
       Thread.sleep(mailAppProperties.getSendDelayMs());
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new IllegalStateException("Interrupted while delaying between sends", e);
+      throw new EmailSendingException(
+          "Unable to pause between sends because the process was interrupted.", e);
     }
   }
 }

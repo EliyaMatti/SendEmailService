@@ -3,7 +3,7 @@ package com.mailSender.smtp;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-import com.mailSender.MailAppProperties;
+import com.mailSender.config.MailAppProperties;
 import com.mailSender.MailBodyAttachment;
 import com.mailSender.campaign.EmailMessage;
 import java.util.List;

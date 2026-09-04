@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import java.nio.file.Path;
 import java.util.List;
 import org.apache.poi.ss.usermodel.Row;
@@ -12,6 +15,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.LoggerFactory;
 
 class ExcelReaderTest {
 
@@ -20,18 +24,18 @@ class ExcelReaderTest {
   @Test
   void missingExcelFileFailsLoudly() {
     Path missing = tempDir.resolve("missing.xlsx");
-    IllegalStateException ex =
-        assertThrows(IllegalStateException.class, () -> ExcelReader.read(missing.toString()));
-    assertTrue(ex.getMessage().contains("Cannot read Excel file"));
+    ExcelProcessingException ex =
+        assertThrows(ExcelProcessingException.class, () -> ExcelReader.read(missing.toString()));
+    assertTrue(ex.getMessage().contains("not found or cannot be read"));
   }
 
   @Test
   void corruptOrNonXlsxFileFailsLoudly() throws Exception {
     Path notExcel = tempDir.resolve("not-excel.xlsx");
     java.nio.file.Files.writeString(notExcel, "this is not an xlsx file");
-    IllegalStateException ex =
-        assertThrows(IllegalStateException.class, () -> ExcelReader.read(notExcel.toString()));
-    assertTrue(ex.getMessage().contains("Cannot read Excel file"));
+    ExcelProcessingException ex =
+        assertThrows(ExcelProcessingException.class, () -> ExcelReader.read(notExcel.toString()));
+    assertTrue(ex.getMessage().contains("valid .xlsx workbook"));
   }
 
   @Test
@@ -159,18 +163,39 @@ class ExcelReaderTest {
       }
     }
 
-    IllegalStateException ex =
-        assertThrows(IllegalStateException.class, () -> ExcelReader.read(excel.toString()));
-    assertTrue(ex.getMessage().contains("email and name"));
+    ExcelProcessingException ex =
+        assertThrows(ExcelProcessingException.class, () -> ExcelReader.read(excel.toString()));
+    assertTrue(ex.getMessage().contains("the Name column was not found"));
+  }
+
+  @Test
+  void headerRowWithNameButNoEmailFailsLoudly() throws Exception {
+    Path excel = tempDir.resolve("name-only-header.xlsx");
+    try (Workbook workbook = new XSSFWorkbook()) {
+      Sheet sheet = workbook.createSheet();
+      Row header = sheet.createRow(0);
+      header.createCell(0).setCellValue("name");
+      header.createCell(1).setCellValue("company");
+      Row row = sheet.createRow(1);
+      row.createCell(0).setCellValue("Ada");
+      row.createCell(1).setCellValue("Acme");
+      try (var out = java.nio.file.Files.newOutputStream(excel)) {
+        workbook.write(out);
+      }
+    }
+
+    ExcelProcessingException ex =
+        assertThrows(ExcelProcessingException.class, () -> ExcelReader.read(excel.toString()));
+    assertTrue(ex.getMessage().contains("the Email column was not found"));
   }
 
   @Test
   void unsupportedFileTypeFailsBeforeParse() throws Exception {
     Path csv = tempDir.resolve("contacts.csv");
     java.nio.file.Files.writeString(csv, "email,name\na@example.com,Ada");
-    IllegalStateException ex =
-        assertThrows(IllegalStateException.class, () -> ExcelReader.read(csv.toString()));
-    assertTrue(ex.getMessage().contains("Unsupported Excel file type"));
+    ExcelProcessingException ex =
+        assertThrows(ExcelProcessingException.class, () -> ExcelReader.read(csv.toString()));
+    assertTrue(ex.getMessage().contains("not a .xlsx workbook"));
   }
 
   @Test
@@ -182,9 +207,9 @@ class ExcelReaderTest {
         workbook.write(out);
       }
     }
-    IllegalStateException ex =
-        assertThrows(IllegalStateException.class, () -> ExcelReader.read(excel.toString()));
-    assertTrue(ex.getMessage().contains("Excel file is empty"));
+    ExcelProcessingException ex =
+        assertThrows(ExcelProcessingException.class, () -> ExcelReader.read(excel.toString()));
+    assertTrue(ex.getMessage().contains("contains no rows"));
   }
 
   @Test
@@ -226,5 +251,38 @@ class ExcelReaderTest {
     assertTrue(result.summary().contains("Valid: 1"));
     assertTrue(result.summary().contains("Invalid: 2"));
     assertTrue(result.summary().contains("Duplicates: 1"));
+  }
+
+  @Test
+  void logsLoadCountsWithoutPasswords() throws Exception {
+    Path excel = tempDir.resolve("log-counts.xlsx");
+    try (Workbook workbook = new XSSFWorkbook()) {
+      Sheet sheet = workbook.createSheet();
+      Row header = sheet.createRow(0);
+      header.createCell(0).setCellValue("Email");
+      header.createCell(1).setCellValue("Name");
+      Row valid = sheet.createRow(1);
+      valid.createCell(0).setCellValue("a@example.com");
+      valid.createCell(1).setCellValue("Ada");
+      try (var out = java.nio.file.Files.newOutputStream(excel)) {
+        workbook.write(out);
+      }
+    }
+    Logger logger = (Logger) LoggerFactory.getLogger(ExcelReader.class);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    logger.addAppender(appender);
+    try {
+      ExcelReader.read(excel.toString());
+      String joined =
+          String.join("\n", appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList());
+      assertTrue(joined.contains("Excel file loaded: log-counts.xlsx"));
+      assertTrue(joined.contains("Total rows: 1"));
+      assertTrue(joined.contains("Valid contacts: 1"));
+      assertTrue(joined.contains("Invalid contacts: 0"));
+      assertTrue(appender.list.stream().noneMatch(e -> e.getFormattedMessage().toLowerCase().contains("password")));
+    } finally {
+      logger.detachAppender(appender);
+    }
   }
 }

@@ -14,19 +14,22 @@ public final class ExcelValidator {
   public static Path requireXlsxFile(String filePath) {
     Path path = Path.of(filePath);
     if (!Files.isRegularFile(path)) {
-      throw new IllegalStateException("Cannot read Excel file: " + filePath);
+      throw new ExcelProcessingException(
+          "Unable to process the Excel file because it was not found or cannot be read: "
+              + filePath);
     }
     String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
     if (!fileName.endsWith(".xlsx")) {
-      throw new IllegalStateException(
-          "Unsupported Excel file type (expected .xlsx): " + filePath);
+      throw new ExcelProcessingException(
+          "Unable to process the Excel file because it is not a .xlsx workbook: " + filePath);
     }
     return path;
   }
 
   public static void requireSheetNotEmpty(Sheet sheet, String filePath) {
     if (sheet.getPhysicalNumberOfRows() == 0) {
-      throw new IllegalStateException("Excel file is empty: " + filePath);
+      throw new ExcelProcessingException(
+          "Unable to process the Excel file because it contains no rows: " + filePath);
     }
   }
 

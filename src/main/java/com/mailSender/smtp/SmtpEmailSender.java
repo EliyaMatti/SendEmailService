@@ -1,6 +1,6 @@
 package com.mailSender.smtp;
 
-import com.mailSender.MailAppProperties;
+import com.mailSender.config.MailAppProperties;
 import com.mailSender.MailBodyAttachment;
 import com.mailSender.campaign.EmailMessage;
 import jakarta.mail.internet.MimeMessage;
@@ -52,11 +52,11 @@ public class SmtpEmailSender implements EmailSender {
       }
       mailBodyAttachment.addAttachments(helper, message.getAttachments());
       mailSender.send(mimeMessage);
-      log.info("Sent message successfully to {}", to);
+      log.info("Email sent successfully");
     } catch (SmtpSendException e) {
       throw e;
     } catch (Exception e) {
-      log.debug("SMTP send failed to {}", to, e);
+      log.debug("SMTP send failed", e);
       throw new SmtpSendException(SmtpFailureClassifier.userMessage(to, e), e);
     }
   }

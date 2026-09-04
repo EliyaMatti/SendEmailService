@@ -9,6 +9,6 @@ At the beginning of implementation work:
 
 1. Read `AGENTS.md`.
 2. Read `DEVELOPMENT_TASKS.md` and `AGENT_WORKFLOW.md`.
-3. Take the first unchecked task in **Suggested order** (Phase 1 discovery first: M1-001 → M1-003).
+3. Take the first incomplete task in **Suggested order**. Discovery (M1-001 → M1-003) first only if those IDs are still open. If the user (or the M1 orchestrator) names a start ID such as M1-016, use that queue instead of restarting discovery.
 
-Do not skip discovery for implementation. Do not expand scope past the current ID unless the user asks.
+Do not skip discovery when it is still incomplete. Do not expand scope past the current ID unless the user asks.

@@ -17,9 +17,9 @@ class EmailTemplateTest {
   @Test
   void missingBodyFileFailsLoudly() {
     Path missing = tempDir.resolve("missing-body.txt");
-    IllegalStateException ex =
-        assertThrows(IllegalStateException.class, () -> EmailTemplate.load(missing.toString()));
-    assertTrue(ex.getMessage().contains("Cannot read body file"));
+    TemplateValidationException ex =
+        assertThrows(TemplateValidationException.class, () -> EmailTemplate.load(missing.toString()));
+    assertTrue(ex.getMessage().contains("Unable to read the email body file"));
   }
 
   @Test

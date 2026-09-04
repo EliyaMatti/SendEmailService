@@ -1,5 +1,6 @@
 package com.mailSender;
 
+import com.mailSender.smtp.EmailSendingException;
 import jakarta.mail.MessagingException;
 import java.io.File;
 import java.util.List;
@@ -24,7 +25,8 @@ public class MailBodyAttachment {
       }
       File file = new File(filePath);
       if (!file.exists() || !file.canRead()) {
-        throw new RuntimeException("Cannot read file: " + file.getAbsolutePath());
+        throw new EmailSendingException(
+            "Unable to attach the file because it could not be read: " + file.getAbsolutePath());
       }
       helper.addAttachment(file.getName(), file);
     }

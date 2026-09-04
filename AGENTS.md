@@ -66,11 +66,16 @@ When all tasks are complete, produce the report required by `DEVELOPMENT_TASKS.m
 | `MailBody` | Campaign send loop |
 | `EmailService` | SMTP |
 | `MailBodyAttachment` | Optional file |
-| `MailAppProperties` | `mail.*` config |
+| `MailAppProperties` | `mail.*` config (`com.mailSender.config`) |
 
 ## Cloud Agent environment
 
 - Dependencies: `mvn test` (batch stays off in context tests).
 - Dry-run e2e (no SMTP secrets): set `MAIL_BATCH_ENABLED=true`, `MAIL_DRY_RUN=true`, plus `MAIL_EXCEL_FILE_PATH` and `MAIL_BODY_FILE_PATH` to sample files, then `mvn spring-boot:run`.
 - Real sends need `MAIL_USERNAME` / `MAIL_PASSWORD` (or gitignored `application-local.properties`); never commit credentials.
-Begin with **M1-001**.
+
+## Orchestrator (remaining Milestone 1)
+
+To finish Milestone 1 from configuration onward, use [`.cursor/skills/m1-orchestrator/SKILL.md`](.cursor/skills/m1-orchestrator/SKILL.md). Queue is **M1-016** through **M1-035** (one ID per pass). Stop/subagent hooks in `.cursor/hooks.json` continue the queue.
+
+Begin with **M1-001** only when discovery is still incomplete. If M1-001–M1-010 are done, take the first incomplete ID from **M1-016** unless the user names a different ID.

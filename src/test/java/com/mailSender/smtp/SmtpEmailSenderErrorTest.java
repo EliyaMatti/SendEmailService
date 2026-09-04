@@ -9,7 +9,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.mailSender.MailAppProperties;
+import com.mailSender.config.MailAppProperties;
 import com.mailSender.MailBodyAttachment;
 import com.mailSender.campaign.EmailMessage;
 import jakarta.mail.Session;
