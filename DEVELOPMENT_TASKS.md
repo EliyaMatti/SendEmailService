@@ -168,53 +168,43 @@ Refactoring Recommendations
 
 ---
 
-# 4. M1-002 — Establish baseline
+# 4. M1-002 — Establish baseline [x]
 
-Run the existing application.
+* [x] How the application starts.
+* [x] Required input files.
+* [x] Required configuration.
+* [x] Excel format.
+* [x] Email format.
+* [x] SMTP configuration.
+* [x] Expected output.
+* [x] Error behavior.
 
-Document:
+### Deliverable
 
-* How the application starts.
-* Required input files.
-* Required configuration.
-* Excel format.
-* Email format.
-* SMTP configuration.
-* Expected output.
-* Error behavior.
-
-Create:
-
-`docs/BASELINE.md`
-
-Document the current workflow.
+`docs/BASELINE.md` — current Excel → SMTP workflow (verified with `mvn test` and dry-run / batch-off `spring-boot:run`; no live SMTP).
 
 ---
 
-# 5. M1-003 — Identify technical debt
+# 5. M1-003 — Identify technical debt [x]
 
-Inspect the code for:
+* [x] God classes
+* [x] Large methods
+* [x] Duplicate code
+* [x] Hardcoded values
+* [x] Hardcoded credentials
+* [x] Static state
+* [x] Tight coupling
+* [x] Poor exception handling
+* [x] Poor logging
+* [x] Unclear naming
+* [x] Unused dependencies
+* [x] Unused methods
+* [x] Magic numbers
+* [x] Magic strings
 
-* God classes
-* Large methods
-* Duplicate code
-* Hardcoded values
-* Hardcoded credentials
-* Static state
-* Tight coupling
-* Poor exception handling
-* Poor logging
-* Unclear naming
-* Unused dependencies
-* Unused methods
-* Magic numbers
-* Magic strings
+### Deliverable
 
-Document findings in:
-
-`docs/TECHNICAL_DEBT.md`
-
-Do NOT fix everything in this task.
+`docs/TECHNICAL_DEBT.md` — findings only; no fixes in this task.
 
 ---
 
