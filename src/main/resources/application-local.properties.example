@@ -1,10 +1,12 @@
 # Copy this file to application-local.properties (gitignored) and fill in values.
 # Gmail: use an App Password, not your account password.
+# See also `.env.example` for the same settings as environment variables.
 
 spring.mail.username=your.address@gmail.com
 spring.mail.password=your-app-password
 
 mail.from=your.address@gmail.com
+mail.from-name=
 mail.excel-file-path=C:\\path\\to\\recipients.xlsx
 mail.body-file-path=C:\\path\\to\\body.txt
 mail.attachment-path=C:\\path\\to\\resume.pdf

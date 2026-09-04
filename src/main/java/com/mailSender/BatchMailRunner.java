@@ -1,11 +1,11 @@
 package com.mailSender;
 
+import com.mailSender.config.SmtpConfiguration;
 import com.mailSender.excel.ExcelReadResult;
 import com.mailSender.excel.ExcelReader;
 import java.io.File;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -16,18 +16,13 @@ public class BatchMailRunner implements CommandLineRunner {
 
   private final MailAppProperties mailAppProperties;
   private final MailBody mailBody;
-  private final String smtpUsername;
-  private final String smtpPassword;
+  private final SmtpConfiguration smtpConfiguration;
 
   public BatchMailRunner(
-      MailAppProperties mailAppProperties,
-      MailBody mailBody,
-      @Value("${spring.mail.username:}") String smtpUsername,
-      @Value("${spring.mail.password:}") String smtpPassword) {
+      MailAppProperties mailAppProperties, MailBody mailBody, SmtpConfiguration smtpConfiguration) {
     this.mailAppProperties = mailAppProperties;
     this.mailBody = mailBody;
-    this.smtpUsername = smtpUsername;
-    this.smtpPassword = smtpPassword;
+    this.smtpConfiguration = smtpConfiguration;
   }
 
   @Override
@@ -68,7 +63,7 @@ public class BatchMailRunner implements CommandLineRunner {
   }
 
   private void requireSmtpConfig() {
-    if (isBlank(smtpUsername) || isBlank(smtpPassword) || isBlank(mailAppProperties.getFrom())) {
+    if (!smtpConfiguration.isReadyForSend()) {
       throw new IllegalStateException(
           "Real send requires spring.mail.username, spring.mail.password, and mail.from");
     }

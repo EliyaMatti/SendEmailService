@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import com.mailSender.config.SmtpConfiguration;
 import org.junit.jupiter.api.Test;
 
 class BatchMailRunnerTest {
@@ -22,7 +23,7 @@ class BatchMailRunnerTest {
     properties.setExcelFilePath("excel.xlsx");
     properties.setBodyFilePath("body.txt");
     properties.setFrom("");
-    BatchMailRunner runner = new BatchMailRunner(properties, mock(MailBody.class), "", "");
+    BatchMailRunner runner = new BatchMailRunner(properties, mock(MailBody.class), smtp("", "", ""));
     IllegalStateException ex = assertThrows(IllegalStateException.class, () -> runner.run());
     assertTrue(ex.getMessage().contains("Real send requires"));
   }
@@ -37,7 +38,10 @@ class BatchMailRunnerTest {
     properties.setFrom("from@example.com");
     properties.setSentLogPath("");
     BatchMailRunner runner =
-        new BatchMailRunner(properties, mock(MailBody.class), "user@example.com", "secret");
+        new BatchMailRunner(
+            properties,
+            mock(MailBody.class),
+            smtp("user@example.com", "secret", "from@example.com"));
     IllegalStateException ex = assertThrows(IllegalStateException.class, () -> runner.run());
     assertTrue(ex.getMessage().contains("mail.sent-log-path"));
   }
@@ -46,7 +50,7 @@ class BatchMailRunnerTest {
   void disabledBatchDoesNotRequireSmtpCredentials() {
     MailAppProperties properties = new MailAppProperties();
     properties.setBatchEnabled(false);
-    BatchMailRunner runner = new BatchMailRunner(properties, mock(MailBody.class), "", "");
+    BatchMailRunner runner = new BatchMailRunner(properties, mock(MailBody.class), smtp("", "", ""));
     assertDoesNotThrow(() -> runner.run());
   }
 
@@ -62,9 +66,14 @@ class BatchMailRunnerTest {
     properties.setAttachmentPath("missing-attachment.pdf");
     MailBody mailBody = mock(MailBody.class);
     BatchMailRunner runner =
-        new BatchMailRunner(properties, mailBody, "user@example.com", "secret");
+        new BatchMailRunner(
+            properties, mailBody, smtp("user@example.com", "secret", "from@example.com"));
     IllegalStateException ex = assertThrows(IllegalStateException.class, () -> runner.run());
     assertTrue(ex.getMessage().contains("Cannot read attachment"));
     verify(mailBody, never()).sendPersonalizedEmails(anyString(), anyList(), anySet());
+  }
+
+  private static SmtpConfiguration smtp(String username, String password, String fromEmail) {
+    return new SmtpConfiguration("smtp.gmail.com", 587, username, password, fromEmail, "", true);
   }
 }

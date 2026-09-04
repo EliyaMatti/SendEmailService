@@ -407,7 +407,12 @@ Placeholder {{Company}} does not exist in the imported data.
 
 # 11. Phase 3 — SMTP Refactoring
 
-# M1-009 — Extract SMTP configuration
+# M1-009 — Extract SMTP configuration [x]
+
+* [x] Dedicated `SmtpConfiguration` (`host`, `port`, `username`, `password`, `fromEmail`, `fromName`, `tlsEnabled`).
+* [x] Bound from existing `spring.mail.*` / `mail.from` (plus optional `mail.from-name`).
+* [x] Password never included in `toString()` / logs.
+* [x] Batch preflight uses `SmtpConfiguration.isReadyForSend()` (same user-facing error as before).
 
 Create a dedicated configuration model.
 
@@ -429,7 +434,12 @@ Do not expose the password in logs.
 
 ---
 
-# M1-010 — Remove hardcoded credentials
+# M1-010 — Remove hardcoded credentials [x]
+
+* [x] Searched the project for `password` / `smtp` / `username` / `token` / `secret` / `apikey`.
+* [x] No live credentials in committed source (placeholders and test fakes only).
+* [x] SMTP settings stay env/`application-local.properties` (gitignored); `.env.example` added; no real `.env`.
+* [x] `SMTP_*` aliases accepted when matching `MAIL_*` vars are unset.
 
 Search the entire project for:
 

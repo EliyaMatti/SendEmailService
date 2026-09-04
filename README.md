@@ -83,7 +83,7 @@ Set at least:
 - `mail.excel-file-path`
 - `mail.body-file-path`
 
-You can use environment variables instead of that file; see [Configuration](#configuration).
+You can use environment variables instead of that file; see [Configuration](#configuration). A placeholder list is in `.env.example` (copy to gitignored `.env` only as a reminder — Spring Boot does not load `.env` automatically).
 
 ### 5. Preview (no SMTP)
 
@@ -146,6 +146,12 @@ If the recipient list is empty after skipping blanks/invalid emails, the job log
 | `MAIL_HOST` | SMTP host | `smtp.gmail.com` |
 | `MAIL_PORT` | SMTP port | `587` |
 | `MAIL_FROM` | From address | SMTP username |
+| `MAIL_FROM_NAME` | Optional From display name (`mail.from-name`; SMTP config only) | empty |
+| `SMTP_HOST` | Alias for `MAIL_HOST` if `MAIL_HOST` is unset | `smtp.gmail.com` |
+| `SMTP_PORT` | Alias for `MAIL_PORT` if `MAIL_PORT` is unset | `587` |
+| `SMTP_USERNAME` | Alias for `MAIL_USERNAME` if `MAIL_USERNAME` is unset | empty |
+| `SMTP_PASSWORD` | Alias for `MAIL_PASSWORD` if `MAIL_PASSWORD` is unset | empty |
+| `SMTP_FROM_EMAIL` | Alias for `MAIL_FROM` if `MAIL_FROM` is unset | SMTP username |
 | `MAIL_SUBJECT` | Email subject | configured default |
 | `MAIL_EXCEL_FILE_PATH` | Recipients Excel path | empty |
 | `MAIL_BODY_FILE_PATH` | Body template text file | empty |
@@ -156,4 +162,4 @@ If the recipient list is empty after skipping blanks/invalid emails, the job log
 | `MAIL_SENT_LOG_PATH` | File of already-sent addresses | `sent-addresses.txt` |
 | `MAIL_SEND_DELAY_MS` | Delay between real sends (ms) | `1000` |
 
-Defaults in `application.properties` match this table. Real SMTP runs only when the batch is enabled **and** dry-run is off.
+Defaults in `application.properties` match this table. Real SMTP runs only when the batch is enabled **and** dry-run is off. Host, port, username, password, from address, from name, and STARTTLS are bound into `SmtpConfiguration`; the password is never written to logs.
