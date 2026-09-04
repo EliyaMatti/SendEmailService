@@ -1,7 +1,8 @@
 package com.mailSender;
 
+import com.mailSender.excel.ExcelReadResult;
+import com.mailSender.excel.ExcelReader;
 import java.io.File;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,8 +62,9 @@ public class BatchMailRunner implements CommandLineRunner {
         }
       }
     }
-    List<EmailRecipient> recipients = ReadFromExcel.readEmailsAndNamesFromExcel(excelFilePath);
-    mailBody.sendPersonalizedEmails(bodyFilePath, recipients);
+    ExcelReadResult excel = ExcelReader.read(excelFilePath);
+    mailBody.sendPersonalizedEmails(
+        bodyFilePath, excel.getContacts(), excel.getPlaceholderKeys());
   }
 
   private void requireSmtpConfig() {

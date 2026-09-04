@@ -1,19 +1,19 @@
-package com.mailSender;
+package com.mailSender.excel;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class EmailRecipient {
+public class Contact {
   private final String email;
   private final String name;
   private final Map<String, String> placeholders;
 
-  public EmailRecipient(String email, String name) {
+  public Contact(String email, String name) {
     this(email, name, Map.of());
   }
 
-  public EmailRecipient(String email, String name, Map<String, String> extraPlaceholders) {
+  public Contact(String email, String name, Map<String, String> extraPlaceholders) {
     this.email = email;
     this.name = name;
     Map<String, String> values = new LinkedHashMap<>();
