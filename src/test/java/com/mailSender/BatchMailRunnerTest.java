@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -64,6 +65,6 @@ class BatchMailRunnerTest {
         new BatchMailRunner(properties, mailBody, "user@example.com", "secret");
     IllegalStateException ex = assertThrows(IllegalStateException.class, () -> runner.run());
     assertTrue(ex.getMessage().contains("Cannot read attachment"));
-    verify(mailBody, never()).sendPersonalizedEmails(anyString(), anyList());
+    verify(mailBody, never()).sendPersonalizedEmails(anyString(), anyList(), anySet());
   }
 }

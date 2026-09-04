@@ -32,11 +32,29 @@ First row should be headers that include **email** and **name** (aliases such as
 
 If the first row does not look like headers, column A is email and column B is name.
 
-Blank rows and cells without `@` are skipped. Formula and numeric cells are read with Apache POI `DataFormatter`.
+Blank rows and cells without `@` are skipped (counted as invalid). Duplicate addresses in the same file (case-insensitive) are skipped after the first valid row. Formula and numeric cells are read with Apache POI `DataFormatter`. Only `.xlsx` is supported.
+
+After a successful read the app logs a validation summary:
+
+```text
+Total rows: 500
+Valid: 472
+Invalid: 18
+Duplicates: 10
+```
+
+A missing file, empty workbook, or non-`.xlsx` path fails before any mail is sent.
 
 ### 2. Write the body template
 
-Save a UTF-8 text file. Placeholders look like `{{key}}`. Built-in keys are `{{name}}` and `{{email}}`. Unknown placeholders become an empty string.
+Save a UTF-8 text file. Placeholders look like `{{key}}` (letter case does not matter: `{{Name}}` and `{{name}}` are the same). Built-in keys are `{{name}}` and `{{email}}`. Extra Excel columns add more keys.
+
+Before sending, the template is checked: empty subject, empty body, broken `{{…}}` syntax, or a placeholder that is not a column in the Excel file all fail with `Template validation failed` (no SMTP). Example:
+
+```text
+Template validation failed:
+Placeholder {{Company}} does not exist in the imported data.
+```
 
 ```
 Hi {{name}},

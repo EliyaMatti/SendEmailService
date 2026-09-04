@@ -1,12 +1,14 @@
-package com.mailSender;
+package com.mailSender.excel;
 
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
@@ -17,54 +19,89 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ReadFromExcel {
+public class ExcelReader {
 
-  private static final Logger log = LoggerFactory.getLogger(ReadFromExcel.class);
+  private static final Logger log = LoggerFactory.getLogger(ExcelReader.class);
 
-  public static List<EmailRecipient> readEmailsAndNamesFromExcel(String filePath) {
-    Path path = Path.of(filePath);
-    if (!Files.isRegularFile(path)) {
-      throw new IllegalStateException("Cannot read Excel file: " + filePath);
-    }
+  public static ExcelReadResult read(String filePath) {
+    Path path = ExcelValidator.requireXlsxFile(filePath);
 
-    List<EmailRecipient> recipients = new ArrayList<>();
     try (InputStream in = Files.newInputStream(path);
         Workbook workbook = new XSSFWorkbook(in)) {
       Sheet sheet = workbook.getSheetAt(0);
+      ExcelValidator.requireSheetNotEmpty(sheet, filePath);
       DataFormatter formatter = new DataFormatter();
       FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
 
       Row firstRow = sheet.getRow(sheet.getFirstRowNum());
       ColumnMap columns = ColumnMap.fromFirstRow(firstRow, formatter, evaluator);
 
+      Set<String> placeholderKeys = new LinkedHashSet<>();
+      placeholderKeys.add("email");
+      placeholderKeys.add("name");
+      placeholderKeys.addAll(columns.extraKeys());
+
+      List<Contact> contacts = new ArrayList<>();
+      Set<String> seenEmails = new LinkedHashSet<>();
+      int totalRows = 0;
+      int invalid = 0;
+      int duplicates = 0;
+
       int startRow = columns.headerRow() ? sheet.getFirstRowNum() + 1 : sheet.getFirstRowNum();
       for (int r = startRow; r <= sheet.getLastRowNum(); r++) {
+        totalRows++;
         Row row = sheet.getRow(r);
+        int rowNumber = r + 1;
         if (row == null) {
+          invalid++;
+          log.warn("Skipping row {}: empty row", rowNumber);
           continue;
         }
-        int rowNumber = r + 1;
         String email = columns.email(row, formatter, evaluator);
         String name = columns.name(row, formatter, evaluator);
+        Map<String, String> extras = columns.extras(row, formatter, evaluator);
+        if (ExcelValidator.isEmptyRow(email, name, extras)) {
+          invalid++;
+          log.warn("Skipping row {}: empty row", rowNumber);
+          continue;
+        }
         if (email.isBlank()) {
+          invalid++;
           log.warn("Skipping row {}: blank email", rowNumber);
           continue;
         }
-        if (!email.contains("@")) {
+        if (!ExcelValidator.isValidEmail(email)) {
+          invalid++;
           log.warn("Skipping row {}: invalid email '{}'", rowNumber, email);
           continue;
         }
-        recipients.add(new EmailRecipient(email, name, columns.extras(row, formatter, evaluator)));
+        if (ExcelValidator.isDuplicate(email, seenEmails)) {
+          duplicates++;
+          log.warn("Skipping row {}: duplicate email '{}'", rowNumber, email);
+          continue;
+        }
+        seenEmails.add(ExcelValidator.normalizeEmail(email));
+        contacts.add(new Contact(email, name, extras));
       }
+
+      ExcelReadResult result =
+          new ExcelReadResult(
+              contacts, totalRows, contacts.size(), invalid, duplicates, placeholderKeys);
+      log.info("Excel file loaded: {}", path.getFileName());
+      log.info("Total rows: {}", result.getTotalRows());
+      log.info("Valid: {}", result.getValid());
+      log.info("Invalid: {}", result.getInvalid());
+      log.info("Duplicates: {}", result.getDuplicates());
+      return result;
     } catch (IllegalStateException e) {
       throw e;
     } catch (Exception e) {
       throw new IllegalStateException("Cannot read Excel file: " + filePath, e);
     }
-    return recipients;
   }
 
-  private static String cellValue(Cell cell, DataFormatter formatter, FormulaEvaluator evaluator) {
+
+  static String cellValue(Cell cell, DataFormatter formatter, FormulaEvaluator evaluator) {
     if (cell == null) {
       return "";
     }
@@ -90,7 +127,7 @@ public class ReadFromExcel {
     return "name".equals(key) || "fullname".equals(key) || "full_name".equals(key);
   }
 
-  private static final class ColumnMap {
+  static final class ColumnMap {
     private final int emailIndex;
     private final int nameIndex;
     private final Map<Integer, String> extraIndexes;
@@ -160,6 +197,10 @@ public class ReadFromExcel {
       extraIndexes.forEach(
           (index, key) -> values.put(key, cellValue(row.getCell(index), formatter, evaluator)));
       return values;
+    }
+
+    Set<String> extraKeys() {
+      return new LinkedHashSet<>(extraIndexes.values());
     }
   }
 }

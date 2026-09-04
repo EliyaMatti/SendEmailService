@@ -210,7 +210,11 @@ Refactoring Recommendations
 
 # 6. Phase 2 — Define the Core Architecture
 
-## M1-004 — Define core modules
+## M1-004 — Define core modules [x]
+
+* [x] Map the ExcelMail Pro module sketch to the existing CLI (do not create empty packages).
+* [x] Document current types vs target modules (`excel`, `template`, `smtp`, `campaign`, `config`, `application`).
+* [x] Record what stays out of Milestone 1 (SaaS, extra logging facade).
 
 The application should eventually have clear responsibilities similar to:
 
@@ -248,11 +252,15 @@ Adapt the structure to the existing project.
 
 Document the proposed architecture in:
 
-`docs/ARCHITECTURE.md`
+`docs/ARCHITECTURE.md` — proposed modules adapted to `com.mailSender`; no package move in this task.
 
 ---
 
-# 7. M1-005 — Separate Excel processing
+# 7. M1-005 — Separate Excel processing [x]
+
+* [x] Extract Excel read (headers → rows → contacts) out of campaign/SMTP.
+* [x] Domain model `Contact` (email, name, extra columns as placeholders).
+* [x] No send/SMTP/UI in the Excel package.
 
 Extract Excel-related responsibilities from the existing code.
 
@@ -292,7 +300,12 @@ Additional columns should be supported where practical.
 
 ---
 
-# 8. M1-006 — Excel validation
+# 8. M1-006 — Excel validation [x]
+
+* [x] Missing file / unsupported type / empty workbook fail with a clear error.
+* [x] Missing email column, empty email, invalid format, empty rows: skip row, do not crash.
+* [x] Duplicate emails counted; first valid row kept.
+* [x] Report `Total rows` / `Valid` / `Invalid` / `Duplicates` (`ExcelReadResult`).
 
 Implement validation for:
 
@@ -320,7 +333,11 @@ Duplicates: 10
 
 ---
 
-# 9. M1-007 — Separate email template processing
+# 9. M1-007 — Separate email template processing [x]
+
+* [x] `EmailTemplate` loads UTF-8 body files.
+* [x] `TemplateRenderer` fills `{{placeholders}}` from `Contact` (any extra columns; mixed-case keys).
+* [x] Unknown placeholders render as empty (safe); `$` / `\` in values stay literal.
 
 Extract email-template functionality.
 
@@ -362,7 +379,12 @@ Welcome to ABC Ltd.
 
 ---
 
-# 10. M1-008 — Template validation
+# 10. M1-008 — Template validation [x]
+
+* [x] Empty subject / empty body fail with a clear message.
+* [x] Invalid `{{placeholder}}` syntax fails.
+* [x] Missing required fields (`email` / `name` in imported keys) fail.
+* [x] Unsupported placeholders fail: `Placeholder {{Company}} does not exist in the imported data.`
 
 Implement validation for:
 

@@ -1,15 +1,12 @@
 package com.mailSender;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import com.mailSender.excel.Contact;
+import com.mailSender.template.EmailTemplate;
+import com.mailSender.template.TemplateRenderer;
+import com.mailSender.template.TemplateValidator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -18,7 +15,6 @@ import org.springframework.stereotype.Component;
 public class MailBody {
 
   private static final Logger log = LoggerFactory.getLogger(MailBody.class);
-  private static final Pattern PLACEHOLDER = Pattern.compile("\\{\\{(\\w+)\\}\\}");
 
   private final EmailService emailService;
   private final MailAppProperties mailAppProperties;
@@ -34,31 +30,21 @@ public class MailBody {
   }
 
   public static String readFileContent(String filePath) {
-    try {
-      return Files.readString(Path.of(filePath), StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw new IllegalStateException("Cannot read body file: " + filePath, e);
-    }
+    return EmailTemplate.load(filePath).getBody();
   }
 
-  public static String personalize(String template, EmailRecipient recipient) {
-    if (template == null || recipient == null) {
-      return template;
-    }
-    Map<String, String> values = recipient.getPlaceholders();
-    Matcher matcher = PLACEHOLDER.matcher(template);
-    StringBuilder result = new StringBuilder();
-    while (matcher.find()) {
-      String key = matcher.group(1);
-      String value = values.getOrDefault(key, "");
-      matcher.appendReplacement(result, Matcher.quoteReplacement(value));
-    }
-    matcher.appendTail(result);
-    return result.toString();
+  public static String personalize(String template, Contact recipient) {
+    return TemplateRenderer.render(template, recipient);
   }
 
-  public void sendPersonalizedEmails(String textFilePath, List<EmailRecipient> recipients) {
+  public void sendPersonalizedEmails(String textFilePath, List<Contact> recipients) {
+    sendPersonalizedEmails(textFilePath, recipients, placeholderKeysFrom(recipients));
+  }
+
+  public void sendPersonalizedEmails(
+      String textFilePath, List<Contact> recipients, Set<String> placeholderKeys) {
     String template = readFileContent(textFilePath);
+    TemplateValidator.validate(mailAppProperties.getSubject(), template, placeholderKeys);
     if (recipients == null || recipients.isEmpty()) {
       log.warn(
           "No recipients to send: Excel had no usable rows (header-only or all rows skipped).");
@@ -70,7 +56,7 @@ public class MailBody {
     int failed = 0;
     int skipped = 0;
     boolean delayNextAttempt = false;
-    for (EmailRecipient recipient : recipients) {
+    for (Contact recipient : recipients) {
       String email = recipient.getEmail();
       if (alreadySent.contains(SentAddressLog.normalize(email))) {
         skipped++;
@@ -106,6 +92,19 @@ public class MailBody {
     if (failed > 0) {
       throw new IllegalStateException("Batch had " + failed + " send failure(s)");
     }
+  }
+
+  private static Set<String> placeholderKeysFrom(List<Contact> recipients) {
+    Set<String> keys = new LinkedHashSet<>();
+    keys.add("email");
+    keys.add("name");
+    if (recipients == null) {
+      return keys;
+    }
+    for (Contact contact : recipients) {
+      keys.addAll(contact.getPlaceholders().keySet());
+    }
+    return keys;
   }
 
   private boolean shouldDelay() {

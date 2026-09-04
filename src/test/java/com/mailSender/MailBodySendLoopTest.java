@@ -11,6 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mailSender.excel.Contact;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,6 +35,7 @@ class MailBodySendLoopTest {
         .sendEmail(eq("a@example.com"), anyString());
 
     MailAppProperties properties = new MailAppProperties();
+    properties.setSubject("Test subject");
     properties.setDryRun(false);
     properties.setSendDelayMs(0);
     SentAddressLog sentLog = mock(SentAddressLog.class);
@@ -47,8 +49,8 @@ class MailBodySendLoopTest {
                 mailBody.sendPersonalizedEmails(
                     body.toString(),
                     List.of(
-                        new EmailRecipient("a@example.com", "Ada"),
-                        new EmailRecipient("b@example.com", "Bob"))));
+                        new Contact("a@example.com", "Ada"),
+                        new Contact("b@example.com", "Bob"))));
     assertTrue(ex.getMessage().contains("1 send failure"));
 
     verify(emailService).sendEmail(eq("a@example.com"), anyString());
@@ -65,6 +67,7 @@ class MailBodySendLoopTest {
 
     EmailService emailService = mock(EmailService.class);
     MailAppProperties properties = new MailAppProperties();
+    properties.setSubject("Test subject");
     properties.setDryRun(false);
     properties.setSendDelayMs(0);
     SentAddressLog sentLog = mock(SentAddressLog.class);
@@ -74,8 +77,8 @@ class MailBodySendLoopTest {
     mailBody.sendPersonalizedEmails(
         body.toString(),
         List.of(
-            new EmailRecipient("a@example.com", "Ada"),
-            new EmailRecipient("b@example.com", "Bob")));
+            new Contact("a@example.com", "Ada"),
+            new Contact("b@example.com", "Bob")));
 
     verify(emailService, never()).sendEmail(eq("a@example.com"), anyString());
     verify(emailService).sendEmail(eq("b@example.com"), anyString());
@@ -88,6 +91,7 @@ class MailBodySendLoopTest {
 
     EmailService emailService = mock(EmailService.class);
     MailAppProperties properties = new MailAppProperties();
+    properties.setSubject("Test subject");
     properties.setDryRun(true);
     properties.setSendDelayMs(1000);
     SentAddressLog sentLog = mock(SentAddressLog.class);
@@ -95,7 +99,7 @@ class MailBodySendLoopTest {
 
     MailBody mailBody = new MailBody(emailService, properties, sentLog);
     mailBody.sendPersonalizedEmails(
-        body.toString(), List.of(new EmailRecipient("a@example.com", "Ada")));
+        body.toString(), List.of(new Contact("a@example.com", "Ada")));
 
     verify(emailService).sendEmail(eq("a@example.com"), anyString());
     verify(sentLog, never()).record(anyString());
@@ -108,6 +112,7 @@ class MailBodySendLoopTest {
 
     EmailService emailService = mock(EmailService.class);
     MailAppProperties properties = new MailAppProperties();
+    properties.setSubject("Test subject");
     properties.setDryRun(false);
     properties.setSendDelayMs(0);
     SentAddressLog sentLog = mock(SentAddressLog.class);
@@ -117,8 +122,8 @@ class MailBodySendLoopTest {
     mailBody.sendPersonalizedEmails(
         body.toString(),
         List.of(
-            new EmailRecipient("Ada@Example.com", "Ada"),
-            new EmailRecipient("ada@example.com", "Ada again")));
+            new Contact("Ada@Example.com", "Ada"),
+            new Contact("ada@example.com", "Ada again")));
 
     verify(emailService, times(1)).sendEmail(eq("Ada@Example.com"), anyString());
     verify(emailService, never()).sendEmail(eq("ada@example.com"), anyString());
@@ -132,6 +137,7 @@ class MailBodySendLoopTest {
 
     EmailService emailService = mock(EmailService.class);
     MailAppProperties properties = new MailAppProperties();
+    properties.setSubject("Test subject");
     properties.setDryRun(false);
     properties.setSendDelayMs(0);
     SentAddressLog sentLog = mock(SentAddressLog.class);
@@ -142,8 +148,8 @@ class MailBodySendLoopTest {
     mailBody.sendPersonalizedEmails(
         body.toString(),
         List.of(
-            new EmailRecipient("a@example.com", "Ada"),
-            new EmailRecipient("b@example.com", "Bob")));
+            new Contact("a@example.com", "Ada"),
+            new Contact("b@example.com", "Bob")));
 
     verify(emailService).sendEmail(eq("a@example.com"), anyString());
     verify(emailService).sendEmail(eq("b@example.com"), anyString());
@@ -158,6 +164,7 @@ class MailBodySendLoopTest {
 
     EmailService emailService = mock(EmailService.class);
     MailAppProperties properties = new MailAppProperties();
+    properties.setSubject("Test subject");
     properties.setDryRun(false);
     properties.setSendDelayMs(0);
     SentAddressLog sentLog = mock(SentAddressLog.class);
@@ -168,5 +175,28 @@ class MailBodySendLoopTest {
     verify(emailService, never()).sendEmail(anyString(), anyString());
     verify(sentLog, never()).load();
     verify(sentLog, never()).record(anyString());
+  }
+
+  @Test
+  void unsupportedPlaceholderFailsBeforeAnySend() throws Exception {
+    Path body = tempDir.resolve("body.txt");
+    Files.writeString(body, "Welcome to {{Company}}.", StandardCharsets.UTF_8);
+
+    EmailService emailService = mock(EmailService.class);
+    MailAppProperties properties = new MailAppProperties();
+    properties.setSubject("Test subject");
+    properties.setDryRun(false);
+    properties.setSendDelayMs(0);
+    SentAddressLog sentLog = mock(SentAddressLog.class);
+
+    MailBody mailBody = new MailBody(emailService, properties, sentLog);
+    IllegalStateException ex =
+        assertThrows(
+            IllegalStateException.class,
+            () ->
+                mailBody.sendPersonalizedEmails(
+                    body.toString(), List.of(new Contact("a@example.com", "Ada"))));
+    assertTrue(ex.getMessage().contains("Placeholder {{Company}} does not exist"));
+    verify(emailService, never()).sendEmail(anyString(), anyString());
   }
 }

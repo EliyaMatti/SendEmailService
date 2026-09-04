@@ -61,8 +61,9 @@ When all tasks are complete, produce the report required by `DEVELOPMENT_TASKS.m
 | Path | Role |
 | --- | --- |
 | `BatchMailRunner` | Startup batch |
-| `ReadFromExcel` | Recipients |
-| `MailBody` | Template + send loop |
+| `ExcelReader` / `Contact` | Recipients |
+| `EmailTemplate` / `TemplateRenderer` | Body + placeholders |
+| `MailBody` | Campaign send loop |
 | `EmailService` | SMTP |
 | `MailBodyAttachment` | Optional file |
 | `MailAppProperties` | `mail.*` config |
