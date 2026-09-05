@@ -391,7 +391,7 @@ Requirements: unique email, indexes, timestamps, constraints.
 
 # PHASE 4 — Organization / Tenant Model
 
-## M2-008 — Create organizations table [~]
+## M2-008 — Create organizations table [x]
 
 ```text
 id
@@ -404,7 +404,7 @@ updated_at
 
 ---
 
-## M2-009 — Create organization membership [ ]
+## M2-009 — Create organization membership [x]
 
 Table `organization_members`:
 
@@ -420,7 +420,7 @@ Roles: `OWNER`, `ADMIN`, `MEMBER`. Do not over-engineer permissions yet.
 
 ---
 
-## M2-010 — Implement organization isolation [ ]
+## M2-010 — Implement organization isolation [x]
 
 Organization-owned resources must contain or resolve to `organization_id`. Services verify membership before access.
 
@@ -428,7 +428,7 @@ Organization-owned resources must contain or resolve to `organization_id`. Servi
 
 # PHASE 5 — Authentication
 
-## M2-011 — Implement registration [ ]
+## M2-011 — Implement registration [~]
 
 ```http
 POST /api/v1/auth/register

@@ -44,3 +44,5 @@ mail.test-send-to=
 # DB_NAME=excelmail
 # DB_USERNAME=excelmail
 # DB_PASSWORD=
+# APP_JWT_SECRET=
+# APP_ENCRYPTION_KEY=

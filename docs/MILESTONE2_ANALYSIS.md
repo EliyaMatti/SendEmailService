@@ -106,3 +106,14 @@ Do **not** replace POI Excel rules, placeholder rendering, or `EmailSender`.
 The CLI Excel → template → SMTP pipeline is **not** fundamentally broken. Milestone 2 may proceed.
 
 JaCoCo still reports `excel` / `template` / `campaign` after `mvn test` (M1-032 scope).
+
+## Authentication decisions (M2-013)
+
+Until `docs/SECURITY.md` (M2-069):
+
+- Passwords: BCrypt via `PasswordEncoder`.
+- Tokens: HMAC JWT (`APP_JWT_SECRET`, ≥32 characters, `excelmail.security.jwt-expiration-ms`).
+- Authorization: authenticated JWT; organization membership checked in services (`TenantService`).
+- Rate limit: in-memory per-client key on register/login (`excelmail.auth.rate-limit-per-minute`).
+- APIs never return `password_hash`.
+

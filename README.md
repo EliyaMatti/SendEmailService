@@ -228,6 +228,8 @@ The default Spring profile is **`development`**. Use **`production`** for a depl
 | `DB_NAME` | PostgreSQL database name | `excelmail` |
 | `DB_USERNAME` | PostgreSQL username | `excelmail` |
 | `DB_PASSWORD` | PostgreSQL password (never commit) | empty |
+| `APP_JWT_SECRET` | JWT HMAC secret (`api` profile, ≥32 chars) | empty |
+| `APP_ENCRYPTION_KEY` | SMTP password encryption key (`api` profile) | empty |
 
 CLI batch instructions stay in this README. For the HTTP API, set `SPRING_PROFILES_ACTIVE=api` (and usually `development,api`), provide `DB_*` (never commit `DB_PASSWORD`), and run Flyway against local Postgres. Default `mvn spring-boot:run` still does **not** need a database.
 
