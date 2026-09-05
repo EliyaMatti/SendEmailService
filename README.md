@@ -1,8 +1,10 @@
 # SendEmailService
 
-A Spring Boot **command-line** app (no HTTP API). On startup it can read a recipient list from Excel, fill a UTF-8 body template with `{{placeholders}}`, optionally attach a file, and send mail over SMTP.
+A Spring Boot **command-line** app by default (no HTTP). On startup it can read a recipient list from Excel, fill a UTF-8 body template with `{{placeholders}}`, optionally attach a file, and send mail over SMTP.
 
 It is meant for one batch per process: enable the batch, run once, then the JVM exits. It is not a long-running mail server.
+
+An optional **`api` profile** (`SPRING_PROFILES_ACTIVE=api`) starts a servlet container for Milestone 2 REST work. Default `mvn spring-boot:run` stays `WebApplicationType.NONE` (no Tomcat). The batch runner is not loaded on `api`, so HTTP startup does not send mail.
 
 ## What it does
 
@@ -187,13 +189,13 @@ If the recipient list is empty after skipping blanks/invalid emails, the job log
 
 Named settings live in `src/main/resources/application.properties` (grouped: SMTP, files, sending, logging). Campaign keys bind to `MailAppProperties`; SMTP host, port, credentials, and STARTTLS bind to `SmtpConfiguration`. Inter-send pause is `mail.send-delay-ms` (env `MAIL_SEND_DELAY_MS`) — there is no hardcoded `Thread.sleep(60000)`. Logging levels are `logging.level.root` and `logging.level.com.mailSender`.
 
-The default Spring profile is **`development`**. Use **`production`** for a deploy-shaped config that still contains **no passwords**. Activate with `SPRING_PROFILES_ACTIVE=production` or `--spring.profiles.active=production`. Put real credentials only in the environment or gitignored `application-local.properties`. Both profiles keep batch off and dry-run on unless you override those flags.
+The default Spring profile is **`development`**. Use **`production`** for a deploy-shaped config that still contains **no passwords**. Use **`api`** to start the servlet (Milestone 2); combine as `development,api` if needed. Activate with `SPRING_PROFILES_ACTIVE` or `--spring.profiles.active`. Put real credentials only in the environment or gitignored `application-local.properties`. CLI and API profiles keep batch off and dry-run on unless you override those flags.
 
 ### Environment variables
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
-| `SPRING_PROFILES_ACTIVE` | Spring profile (`development` or `production`) | `development` (via `spring.profiles.default`) |
+| `SPRING_PROFILES_ACTIVE` | Spring profile (`development`, `production`, and/or `api`) | `development` (via `spring.profiles.default`) |
 | `MAIL_USERNAME` | SMTP username | empty |
 | `MAIL_PASSWORD` | SMTP password (Gmail App Password) | empty |
 | `MAIL_HOST` | SMTP host | `smtp.gmail.com` |

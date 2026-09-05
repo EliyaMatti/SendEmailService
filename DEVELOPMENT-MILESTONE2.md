@@ -290,7 +290,7 @@ Do not send real mail. Do not require `MAIL_PASSWORD`.
 
 # PHASE 2 — Spring Boot Foundation
 
-## M2-003 — Establish Spring Boot web application [ ]
+## M2-003 — Establish Spring Boot web application [~]
 
 The project is already Spring Boot CLI. **Add** web support; do not convert the only entrypoint to an always-on servlet.
 

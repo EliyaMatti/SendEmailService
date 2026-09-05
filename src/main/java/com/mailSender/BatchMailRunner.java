@@ -1,5 +1,6 @@
 package com.mailSender;
 
+import com.mailSender.config.ApplicationProfiles;
 import com.mailSender.config.MailAppProperties;
 import com.mailSender.config.SmtpConfiguration;
 import com.mailSender.config.SmtpConfigurationException;
@@ -15,13 +16,15 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
  * Startup CLI: optional one-address test send, or the Excel batch. Never sends the full list when
- * test-send is enabled.
+ * test-send is enabled. Disabled on the {@code api} profile so HTTP startup does not send mail.
  */
 @Component
+@Profile("!" + ApplicationProfiles.API)
 public class BatchMailRunner implements CommandLineRunner {
 
   private static final Logger log = LoggerFactory.getLogger(BatchMailRunner.class);
