@@ -27,7 +27,7 @@ public final class TemplateValidator {
       errors.addAll(placeholderErrors(body, keys));
     }
     if (!errors.isEmpty()) {
-      throw new IllegalStateException(
+      throw new TemplateValidationException(
           "Template validation failed:\n" + String.join("\n", errors));
     }
   }

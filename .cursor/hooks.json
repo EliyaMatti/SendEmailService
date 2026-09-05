@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "hooks": {
+    "stop": [
+      {
+        "command": "node .cursor/hooks/m1-orchestrator-next.cjs",
+        "loop_limit": 24
+      }
+    ],
+    "subagentStop": [
+      {
+        "command": "node .cursor/hooks/m1-orchestrator-next.cjs",
+        "matcher": "generalPurpose",
+        "loop_limit": 24
+      }
+    ]
+  }
+}

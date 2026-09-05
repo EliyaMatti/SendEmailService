@@ -48,10 +48,10 @@ public class ExcelReader {
       int duplicates = 0;
 
       int startRow = columns.headerRow() ? sheet.getFirstRowNum() + 1 : sheet.getFirstRowNum();
-      for (int r = startRow; r <= sheet.getLastRowNum(); r++) {
+      for (int rowIndex = startRow; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
         totalRows++;
-        Row row = sheet.getRow(r);
-        int rowNumber = r + 1;
+        Row row = sheet.getRow(rowIndex);
+        int rowNumber = rowIndex + 1;
         if (row == null) {
           invalid++;
           log.warn("Skipping row {}: empty row", rowNumber);
@@ -89,14 +89,17 @@ public class ExcelReader {
               contacts, totalRows, contacts.size(), invalid, duplicates, placeholderKeys);
       log.info("Excel file loaded: {}", path.getFileName());
       log.info("Total rows: {}", result.getTotalRows());
-      log.info("Valid: {}", result.getValid());
-      log.info("Invalid: {}", result.getInvalid());
+      log.info("Valid contacts: {}", result.getValid());
+      log.info("Invalid contacts: {}", result.getInvalid());
       log.info("Duplicates: {}", result.getDuplicates());
       return result;
-    } catch (IllegalStateException e) {
+    } catch (ExcelProcessingException e) {
       throw e;
     } catch (Exception e) {
-      throw new IllegalStateException("Cannot read Excel file: " + filePath, e);
+      log.debug("Excel workbook could not be opened: {}", filePath, e);
+      throw new ExcelProcessingException(
+          "Unable to process the Excel file. Check that the path points to a valid .xlsx workbook.",
+          e);
     }
   }
 
@@ -168,11 +171,15 @@ public class ExcelReader {
       if (bothHeaders) {
         return new ColumnMap(emailIndex, nameIndex, extras, true);
       }
-      if (emailIndex >= 0) {
-        String colA = cellValue(firstRow.getCell(0), formatter, evaluator);
-        if (!colA.contains("@")) {
-          throw new IllegalStateException("Excel header row must include email and name columns");
-        }
+      String colA = cellValue(firstRow.getCell(0), formatter, evaluator);
+      boolean firstCellLooksLikeEmail = colA.contains("@");
+      if (emailIndex >= 0 && nameIndex < 0 && !firstCellLooksLikeEmail) {
+        throw new ExcelProcessingException(
+            "Unable to process the Excel file because the Name column was not found.");
+      }
+      if (nameIndex >= 0 && emailIndex < 0 && !firstCellLooksLikeEmail) {
+        throw new ExcelProcessingException(
+            "Unable to process the Excel file because the Email column was not found.");
       }
       return new ColumnMap(0, 1, Map.of(), false);
     }

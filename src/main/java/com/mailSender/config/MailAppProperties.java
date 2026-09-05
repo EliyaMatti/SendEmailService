@@ -1,12 +1,17 @@
-package com.mailSender;
+package com.mailSender.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** Binds `mail.*` settings (paths, dry-run, batch, test-send, delay). SMTP host/password live in SmtpConfiguration. */
+/**
+ * Central {@code mail.*} settings: input files, sending (delay, dry-run, batch, test-send), and
+ * envelope from. SMTP host/port/credentials live in Spring {@code spring.mail.*} and {@link
+ * SmtpConfiguration}.
+ */
 @ConfigurationProperties(prefix = "mail")
 public class MailAppProperties {
 
   private String from = "";
+  private String fromName = "";
   private String subject = "";
   private String excelFilePath = "";
   private String bodyFilePath = "";
@@ -25,6 +30,14 @@ public class MailAppProperties {
 
   public void setFrom(String from) {
     this.from = from;
+  }
+
+  public String getFromName() {
+    return fromName;
+  }
+
+  public void setFromName(String fromName) {
+    this.fromName = fromName;
   }
 
   public String getSubject() {

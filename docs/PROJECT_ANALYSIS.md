@@ -1,8 +1,67 @@
-# Project analysis (M1-001)
+# Project analysis
 
-Inspection of the existing Excel → SMTP command-line application. This document records the current repository as of Milestone 1 discovery. It does not change runtime behavior.
+Originally **M1-001** (discovery snapshot). Updated **M1-027** so developers can find the current CLI. The snapshot below the divider is kept for history; prefer the current section and [ARCHITECTURE.md](ARCHITECTURE.md) for work today.
+
+## Current stack (M1-027)
+
+| Item | Value |
+| --- | --- |
+| Language | Java 17 (`pom.xml` `java.version`) |
+| Framework | Spring Boot 3.2.3 |
+| App type | Non-web CLI: `WebApplicationType.NONE` |
+| Mail | `spring-boot-starter-mail` behind `EmailSender` / `SmtpEmailSender` |
+| Excel | Apache POI `poi-ooxml` 5.2.3, `.xlsx` only |
+| Logging | SLF4J; `ApplicationLifecycleLogger` plus campaign/Excel/SMTP events |
+| Tests | JUnit 5, Mockito; JaCoCo report for `excel` / `template` / `campaign` after `mvn test` |
+| Formatting | Spotless 2.43.0 (Google Java Format) |
+
+Entry: `MailSenderApplication` enables `MailAppProperties` and `MailProperties`. `BatchMailRunner` runs test-send **or** Excel batch, then the JVM exits.
+
+## Current source layout
+
+```text
+src/main/java/com/mailSender/
+  MailSenderApplication.java, BatchMailRunner.java, MailBody.java,
+  MailBodyAttachment.java, SentAddressLog.java
+  campaign/   EmailMessage, EmailComposer
+  excel/      ExcelReader, ExcelValidator, Contact, ExcelReadResult, ExcelProcessingException
+  template/   EmailTemplate, TemplateRenderer, TemplateValidator, TemplateValidationException
+  smtp/       EmailSender, SmtpEmailSender, SmtpFailureClassifier, SmtpSendException, EmailSendingException
+  config/     MailAppProperties, SmtpConfiguration, SmtpConfigurationException, ApplicationLifecycleLogger
+```
+
+Resources: `application.properties` (safe defaults: batch off, dry-run on), `application-development.properties`, `application-production.properties` (no passwords), `application-local.properties.example`.
+
+Tests live next to those packages (`ExcelReaderTest`, `TemplateRendererTest`, `SmtpEmailSenderTest`, `EndToEndLocalWorkflowTest`, `OriginalExcelSmtpRegressionTest`, …). They mock `JavaMailSender` / `EmailSender` and do not send real mail.
+
+## Current pipeline
+
+```text
+MailSenderApplication (NONE web)
+        ↓
+BatchMailRunner
+        ├── test-send → first Excel row placeholders (optional) → MailBody.sendTestEmail
+        └── batch → ExcelReader → MailBody.sendPersonalizedEmails
+                ├── TemplateValidator + EmailComposer
+                └── EmailSender.send (SmtpEmailSender dry-run or MIME)
+```
+
+## Testing status (M1-027)
+
+Excel, template, validation, mocked SMTP failure modes, local test-send e2e, and original batch regression are covered. There is still no live SMTP integration test (by design).
+
+## Remaining (not Milestone 2)
+
+See [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) “Still open”. Milestone 1 docs IDs after this one: Excel format file (M1-028), cleanup, dependency review, verify, secret scan, architecture review, `NEXT_MILESTONE.md`.
+
+---
+
+# Discovery snapshot (M1-001)
+
+Inspection of the existing Excel → SMTP command-line application **as of discovery**. It does not describe today’s package names.
 
 ## Technology Stack
+
 
 | Item | Value |
 | --- | --- |

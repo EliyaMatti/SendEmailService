@@ -29,16 +29,12 @@ final class SmtpFailureClassifier {
       return "SMTP rejected recipient " + to + " as invalid.";
     }
     if (matches(error, SmtpFailureClassifier::isConfiguration)) {
-      String detail = firstSafeDetail(error);
-      if (detail != null && !detail.isBlank()) {
-        return "SMTP configuration error: " + detail;
-      }
-      return "SMTP configuration error. Check from address, host, port, and TLS settings.";
+      return "Unable to send the message because of an SMTP configuration problem. Check the from address, host, port, TLS, and attachment path.";
     }
     if (matches(error, SmtpFailureClassifier::isRejection)) {
       return "SMTP server rejected the message to " + to + ".";
     }
-    return "Failed to send email to " + to + ".";
+    return "Unable to send email to " + to + ".";
   }
 
   private static boolean matches(Throwable error, java.util.function.Predicate<Throwable> test) {
@@ -94,6 +90,8 @@ final class SmtpFailureClassifier {
     }
     String text = safeLower(error.getMessage());
     return text.contains("cannot read file")
+        || text.contains("unable to attach")
+        || text.contains("could not be read")
         || text.contains("illegal address")
         || text.contains("failed to parse");
   }
@@ -107,22 +105,6 @@ final class SmtpFailureClassifier {
         || text.contains("553")
         || text.contains("554")
         || text.contains("rejected");
-  }
-
-  private static String firstSafeDetail(Throwable error) {
-    Throwable current = error;
-    while (current != null) {
-      String message = current.getMessage();
-      if (message != null && !message.isBlank() && !looksLikeStackTrace(message)) {
-        return message.strip();
-      }
-      current = current.getCause();
-    }
-    return null;
-  }
-
-  private static boolean looksLikeStackTrace(String message) {
-    return message.contains("\n\tat ") || message.contains("Exception in thread");
   }
 
   private static String safeLower(String message) {

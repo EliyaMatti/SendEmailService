@@ -1,11 +1,13 @@
 package com.mailSender.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.mail.MailProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * SMTP connection and envelope settings. The password is held in memory only and is never included
- * in {@link #toString()}.
+ * SMTP connection and envelope settings from {@code spring.mail.*} plus {@code mail.from} /
+ * {@code mail.from-name}. The password is held in memory only and is never included in {@link
+ * #toString()}.
  */
 @Component
 public class SmtpConfiguration {
@@ -17,22 +19,49 @@ public class SmtpConfiguration {
   private final String fromEmail;
   private final String fromName;
   private final boolean tlsEnabled;
+  private final boolean authEnabled;
+
+  @Autowired
+  public SmtpConfiguration(MailProperties mailProperties, MailAppProperties mailAppProperties) {
+    this(
+        emptyIfNull(mailProperties.getHost()),
+        mailProperties.getPort() == null ? 0 : mailProperties.getPort(),
+        emptyIfNull(mailProperties.getUsername()),
+        emptyIfNull(mailProperties.getPassword()),
+        emptyIfNull(mailAppProperties.getFrom()),
+        emptyIfNull(mailAppProperties.getFromName()),
+        flag(mailProperties, "mail.smtp.starttls.enable", false),
+        flag(mailProperties, "mail.smtp.auth", false));
+  }
 
   public SmtpConfiguration(
-      @Value("${spring.mail.host:smtp.gmail.com}") String host,
-      @Value("${spring.mail.port:587}") int port,
-      @Value("${spring.mail.username:}") String username,
-      @Value("${spring.mail.password:}") String password,
-      @Value("${mail.from:}") String fromEmail,
-      @Value("${mail.from-name:}") String fromName,
-      @Value("${spring.mail.properties.mail.smtp.starttls.enable:true}") boolean tlsEnabled) {
-    this.host = host == null ? "" : host;
+      String host,
+      int port,
+      String username,
+      String password,
+      String fromEmail,
+      String fromName,
+      boolean tlsEnabled) {
+    this(host, port, username, password, fromEmail, fromName, tlsEnabled, true);
+  }
+
+  public SmtpConfiguration(
+      String host,
+      int port,
+      String username,
+      String password,
+      String fromEmail,
+      String fromName,
+      boolean tlsEnabled,
+      boolean authEnabled) {
+    this.host = emptyIfNull(host);
     this.port = port;
-    this.username = username == null ? "" : username;
-    this.password = password == null ? "" : password;
-    this.fromEmail = fromEmail == null ? "" : fromEmail;
-    this.fromName = fromName == null ? "" : fromName;
+    this.username = emptyIfNull(username);
+    this.password = emptyIfNull(password);
+    this.fromEmail = emptyIfNull(fromEmail);
+    this.fromName = emptyIfNull(fromName);
     this.tlsEnabled = tlsEnabled;
+    this.authEnabled = authEnabled;
   }
 
   public String getHost() {
@@ -63,6 +92,10 @@ public class SmtpConfiguration {
     return tlsEnabled;
   }
 
+  public boolean isAuthEnabled() {
+    return authEnabled;
+  }
+
   public boolean isReadyForSend() {
     return !isBlank(username) && !isBlank(password) && !isBlank(fromEmail);
   }
@@ -81,7 +114,24 @@ public class SmtpConfiguration {
         + fromName
         + "', tlsEnabled="
         + tlsEnabled
+        + ", authEnabled="
+        + authEnabled
         + "}";
+  }
+
+  private static boolean flag(MailProperties mailProperties, String key, boolean defaultValue) {
+    if (mailProperties.getProperties() == null) {
+      return defaultValue;
+    }
+    String raw = mailProperties.getProperties().get(key);
+    if (raw == null || raw.isBlank()) {
+      return defaultValue;
+    }
+    return Boolean.parseBoolean(raw);
+  }
+
+  private static String emptyIfNull(String value) {
+    return value == null ? "" : value;
   }
 
   private static boolean isBlank(String value) {

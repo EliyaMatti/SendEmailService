@@ -12,8 +12,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mailSender.campaign.EmailMessage;
+import com.mailSender.config.MailAppProperties;
 import com.mailSender.excel.Contact;
 import com.mailSender.smtp.EmailSender;
+import com.mailSender.smtp.EmailSendingException;
+import com.mailSender.template.TemplateValidationException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,16 +48,17 @@ class MailBodySendLoopTest {
     when(sentLog.load()).thenReturn(Set.of());
 
     MailBody mailBody = new MailBody(emailSender, properties, sentLog);
-    IllegalStateException ex =
+    EmailSendingException ex =
         assertThrows(
-            IllegalStateException.class,
+            EmailSendingException.class,
             () ->
                 mailBody.sendPersonalizedEmails(
                     body.toString(),
                     List.of(
                         new Contact("a@example.com", "Ada"),
                         new Contact("b@example.com", "Bob"))));
-    assertTrue(ex.getMessage().contains("1 send failure"));
+    assertTrue(ex.getMessage().contains("Unable to finish the campaign"));
+    assertTrue(ex.getMessage().contains("1 message(s)"));
 
     verify(emailSender).send(argThat(m -> "a@example.com".equals(m.getTo())));
     verify(emailSender).send(argThat(m -> "b@example.com".equals(m.getTo())));
@@ -199,9 +203,9 @@ class MailBodySendLoopTest {
     SentAddressLog sentLog = mock(SentAddressLog.class);
 
     MailBody mailBody = new MailBody(emailSender, properties, sentLog);
-    IllegalStateException ex =
+    TemplateValidationException ex =
         assertThrows(
-            IllegalStateException.class,
+            TemplateValidationException.class,
             () ->
                 mailBody.sendPersonalizedEmails(
                     body.toString(), List.of(new Contact("a@example.com", "Ada"))));

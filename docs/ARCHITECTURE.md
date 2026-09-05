@@ -1,104 +1,86 @@
-# Architecture (M1-004)
+# Architecture
 
-Proposed package layout for the existing Excel → SMTP CLI (`com.mailSender`). This document does **not** create packages or classes. Later Milestone 1 tasks implement the split incrementally.
+Excel → SMTP **command-line** app (`com.mailSender`). Non-web Spring Boot 3.2. This document describes the layout **as of M1-034** (layered pipeline verified). It is not a SaaS design.
 
-The sketch in `DEVELOPMENT_TASKS.md` (ExcelMailPro `config` / `excel` / `template` / `smtp` / `campaign` / `validation` / `logging` / `application`) is a **responsibility map**, not a mandate to invent unused types. Names below keep the current Spring Boot artifact (`MailSender`) and map each box to what already exists.
+The sketch in `DEVELOPMENT_TASKS.md` (`config` / `excel` / `template` / `smtp` / `campaign` / …) is a **responsibility map**. Empty packages and Milestone 2 features (APIs, auth, PostgreSQL) stay out of scope.
 
 ---
 
-## Current layout (after Phase 4 / M1-015)
+## Current layout
 
 ```text
 com.mailSender
-├── MailSenderApplication
-├── MailAppProperties
-├── BatchMailRunner            # CLI: test-send or Excel batch
+├── MailSenderApplication          # WebApplicationType.NONE; MailAppProperties + MailProperties
+├── BatchMailRunner                # CLI: test-send or Excel batch; SMTP preflight
+├── MailBody                       # campaign loop + test-send (uses EmailComposer)
+├── MailBodyAttachment             # optional MIME attachment
+├── SentAddressLog                 # skip/append already-sent addresses
 ├── campaign
-│   ├── EmailMessage           # to/subject/body/from/replyTo/attachments
-│   └── EmailComposer          # Contact + template → EmailMessage (no SMTP)
+│   ├── EmailMessage
+│   └── EmailComposer
 ├── excel
 │   ├── ExcelReader
 │   ├── ExcelValidator
 │   ├── ExcelReadResult
+│   ├── ExcelProcessingException
 │   └── Contact
 ├── template
 │   ├── EmailTemplate
 │   ├── TemplateRenderer
-│   └── TemplateValidator
+│   ├── TemplateValidator
+│   └── TemplateValidationException
 ├── smtp
-│   ├── EmailSender            # send(EmailMessage)
+│   ├── EmailSender
 │   ├── SmtpEmailSender
 │   ├── SmtpFailureClassifier
-│   └── SmtpSendException
-├── config
-│   └── SmtpConfiguration
-├── MailBody                   # campaign loop + sendTestEmail
-├── MailBodyAttachment
-└── SentAddressLog
+│   ├── SmtpSendException
+│   └── EmailSendingException
+└── config
+    ├── MailAppProperties          # mail.* files, sending, envelope
+    ├── SmtpConfiguration          # spring.mail.* + mail.from / from-name
+    ├── SmtpConfigurationException
+    └── ApplicationLifecycleLogger
 ```
 
-Pipeline:
+Pipeline (M1-034):
 
 ```text
-Excel file
-    → ExcelReader / ExcelValidator
-    → Contact
-    → EmailComposer (TemplateRenderer)
-    → EmailMessage
-    → EmailSender
-    → SmtpEmailSender | dry-run
+Excel Layer          excel.ExcelReader / ExcelValidator
+     ↓
+Domain Model         excel.Contact
+     ↓
+Template Layer       template.EmailTemplate / TemplateRenderer / TemplateValidator
+     ↓
+Email Model          campaign.EmailMessage (built by EmailComposer)
+     ↓
+EmailSender          smtp.EmailSender
+     ↓
+SMTP                 smtp.SmtpEmailSender | dry-run (no JavaMailSender)
 ```
 
-Test send: same pipeline for **one** address (`mail.test-send-to`); the Excel list is not mailed.
+CLI wiring (`BatchMailRunner`, `MailBody`) sits **above** these packages and orchestrates the flow. It is not a reverse dependency from Excel or template back to SMTP.
 
----
+### Package dependencies (no layer cycles)
 
-## Target layout (adapt, do not copy blindly)
-
-Keep the root `com.mailSender`. Add **subpackages** only when a later ID extracts a type. Do not introduce empty packages or SaaS-only folders (API, auth, persistence).
+Allowed one-way edges:
 
 ```text
-com.mailSender
-│
-├── MailSenderApplication          # application (entry)
-│
-├── config
-│   ├── MailAppProperties          # from root (M1-016)
-│   └── SmtpConfiguration          # host/port/user/from/tls (M1-009); password not logged
-│
-├── excel
-│   ├── ExcelReader                # from ReadFromExcel (M1-005)
-│   ├── ExcelValidator             # row/file reports (M1-006)
-│   └── Contact                    # from EmailRecipient (email, name, extras)
-│
-├── template
-│   ├── EmailTemplate              # UTF-8 body + subject (M1-007)
-│   ├── TemplateRenderer           # {{placeholders}} (M1-007)
-│   └── TemplateValidator          # empty body/subject, unknown keys (M1-008)
-│
-├── smtp
-│   ├── EmailSender                # interface (M1-011)
-│   ├── SmtpEmailSender            # from EmailService real path
-│   ├── AttachmentSupport          # from MailBodyAttachment
-│   └── (dry-run)                  # EmailSender impl or flag inside sender — pick at M1-011
-│
-├── campaign
-│   ├── EmailCampaign              # from MailBody.sendPersonalizedEmails (M1-014)
-│   ├── EmailMessage               # to/from/subject/body/attachments (M1-013)
-│   └── SentAddressLog             # skip/append; dry-run must not write
-│
-├── validation                     # optional: shared email-format / blank checks
-│   └── (small helpers only if duplicated across excel + template)
-│
-├── exception                      # typed failures (M1-019), not a logging layer
-│
-└── application
-    └── BatchMailRunner            # CLI orchestration only (M1-015 test-send stays here or campaign)
+template  → excel.Contact
+campaign  → excel.Contact, template.TemplateRenderer, config.MailAppProperties
+smtp      → campaign.EmailMessage, config.MailAppProperties
+config    → (Spring MailProperties / mail.* only; no excel/template/campaign/smtp)
+excel     → (POI / JDK only)
 ```
 
-**Logging:** do not add a `logging` package of wrappers. Use SLF4J on the types that own events (M1-018). A package named `logging` would only be justified for a sent-log **file** type; that stays next to campaign as `SentAddressLog`.
+`ArchitectureLayeringTest` fails if excel/template/campaign/smtp/config import a forbidden upper or sibling package.
 
-**Validation:** Excel and template validation belong with those modules (M1-006, M1-008). A top-level `validation` package is for shared predicates (e.g. “contains `@`”), not a second campaign orchestrator.
+**Not a layer cycle:** `SmtpEmailSender` uses root `MailBodyAttachment`, which throws `smtp.EmailSendingException`. That is application-root ↔ SMTP helper coupling left from the original `MailBody` split. Excel, template, and `EmailMessage` stay free of SMTP types.
+
+Runtime path (same layers): Excel file → `ExcelReader` → `Contact` → `EmailComposer` / `TemplateRenderer` → `EmailMessage` → `EmailSender` → `SmtpEmailSender` (or dry-run).
+
+**Test send:** same pipeline for **one** address (`mail.test-send-to`). The Excel list is not mailed. Placeholders come from the first valid Excel row when a path is set.
+
+**Batch:** one composed message per remaining contact (shared `mail.subject`). Dry-run still calls `EmailSender.send` but `SmtpEmailSender` only logs To + body.
 
 ---
 
@@ -109,45 +91,27 @@ com.mailSender
 | **excel** | Read `.xlsx`, headers/aliases, rows → `Contact`, skip/report bad rows | SMTP, templates, sent-log, CLI flags |
 | **template** | Load UTF-8 body, render `{{word}}`, template checks | Excel I/O, `JavaMailSender` |
 | **smtp** | `EmailSender`, MIME/SMTP, attachment on the message, dry-run vs send | Excel parse, placeholder regex |
-| **campaign** | Loop: skip sent, render → `EmailMessage` → send, delay, summary counts | POI, Boot `spring.mail` wiring details |
+| **campaign** | `EmailMessage` / `EmailComposer`; loop still in `MailBody` | POI, Boot `spring.mail` wiring details |
 | **config** | Bind env/`mail.*`/`spring.mail.*` into typed objects | Business rules |
-| **application** | Start/stop, batch vs skip, test-send of **one** address (M1-015), preflight | Parsing Excel cells |
+| **application** | Start/stop, batch vs skip, test-send, preflight | Parsing Excel cells |
 
-Target pipeline (Milestone 1 end state, same as §24 in `DEVELOPMENT_TASKS.md`):
-
-```text
-Excel file
-    → ExcelReader / ExcelValidator
-    → Contact
-    → TemplateRenderer
-    → EmailMessage
-    → EmailSender
-    → SmtpEmailSender | dry-run
-```
+`MailBody` was not renamed to `EmailCampaign` (M1-014 extracted compose/send, not the class name). `SentAddressLog` and `MailBodyAttachment` remain in the root package.
 
 ---
 
-## Mapping: existing types → target
+## Mapping: pre-refactor types → today
 
-| Today | Target | First implementing ID |
-| --- | --- | --- |
-| `ReadFromExcel` | `excel.ExcelReader` | M1-005 |
-| Nested `ColumnMap` | stay inside reader or `excel` helper | M1-005 |
-| `EmailRecipient` | `excel.Contact` (keep extra-column map) | M1-005 |
-| Row skip / `@` check | `excel.ExcelValidator` + result object | M1-006 |
-| `MailBody.readFileContent` / `personalize` | `template.EmailTemplate` / `TemplateRenderer` | M1-007 |
-| Unknown `{{}}` / empty body | `template.TemplateValidator` | M1-008 |
-| `spring.mail.*` + parts of `MailAppProperties` | `config.SmtpConfiguration` | M1-009 |
-| `EmailService` | `smtp.EmailSender` + `SmtpEmailSender` | M1-011 |
-| `MailBodyAttachment` | smtp helper used when building MIME | M1-011 / M1-013 |
-| `sendEmail(String, String)` | `EmailMessage` then `EmailSender.send` | M1-013 |
-| `MailBody.sendPersonalizedEmails` | `campaign.EmailCampaign` | M1-014 |
-| `SentAddressLog` | stay in campaign (file I/O, not SLF4J) | already exists; move with campaign |
-| `BatchMailRunner` | `application` orchestrator | stays; thinner after extracts |
-| `MailAppProperties` | `config` (paths, delay, html, dry-run, batch) | M1-016 |
-| `IllegalStateException` / `RuntimeException` | typed exceptions where they help operators | M1-019 |
-
-Rename only when extracting. Call sites and tests update in the same ID as the move.
+| Original | Now |
+| --- | --- |
+| `ReadFromExcel` | `excel.ExcelReader` |
+| `EmailRecipient` | `excel.Contact` |
+| Row skip / `@` check | `excel.ExcelValidator` + `ExcelReadResult` |
+| `MailBody.readFileContent` / `personalize` | `template.EmailTemplate` / `TemplateRenderer` |
+| Unknown `{{}}` / empty body | `template.TemplateValidator` |
+| `spring.mail.*` + envelope | `config.SmtpConfiguration` + `MailAppProperties` |
+| `EmailService` | `smtp.EmailSender` + `SmtpEmailSender` |
+| `sendEmail(String, String)` | `EmailMessage` then `EmailSender.send` |
+| `IllegalStateException` for operator errors | typed exceptions (M1-019 / M1-020) |
 
 ---
 
@@ -155,29 +119,18 @@ Rename only when extracting. Call sites and tests update in the same ID as the m
 
 - REST controllers, security, PostgreSQL, Redis, Kafka
 - A `logging` service that re-wraps SLF4J
-- Duplicate “Contact” and “EmailRecipient” types long-term (one domain model)
-- A second config system besides Spring (`MailAppProperties` + `SmtpConfiguration` is enough)
+- A second config system besides Spring
 - Packages created “for completeness” with no class
 
 ---
 
-## Constraints that stay true after the split
+## Constraints
 
 - Non-web: `WebApplicationType.NONE`; no `starter-web`
-- Default: batch off, dry-run on; real SMTP only when batch on **and** dry-run false
+- Default: batch off, dry-run on; real SMTP when dry-run is false **and** (batch **or** test-send)
 - Dry-run must not call `JavaMailSender` and must not append the sent-log
 - Per-recipient send failures continue the loop; process fails at end if any failed
-- No secrets in git; password never logged
+- No secrets in git; password never logged (`SmtpConfiguration.toString()` uses `password=***`)
+- Profiles: default `development`; `production` has no credentials in the committed file
 
----
-
-## Implementation order (packages appear when code moves)
-
-1. M1-005 / M1-006 — `excel` (+ `Contact`)
-2. M1-007 / M1-008 — `template`
-3. M1-009 / M1-011 / M1-012 — `config.SmtpConfiguration`, `smtp`
-4. M1-013 / M1-014 — `EmailMessage`, `campaign`
-5. M1-016 / M1-017 — remaining config / profiles
-6. M1-018 / M1-019 — log events on existing types; `exception` types as needed
-
-Until remaining IDs run, see `docs/BASELINE.md` for pre-refactor behavior. Excel types now live in `com.mailSender.excel`.
+Operator docs: [README.md](../README.md). Discovery-era baseline (do not treat as current runtime): [BASELINE.md](BASELINE.md).

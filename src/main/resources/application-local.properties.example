@@ -1,21 +1,39 @@
 # Copy this file to application-local.properties (gitignored) and fill in values.
 # Gmail: use an App Password, not your account password.
 # See also `.env.example` for the same settings as environment variables.
+# Do not put a real MAIL_PASSWORD / App Password in git.
+# Default profile is development. For production: SPRING_PROFILES_ACTIVE=production
+# (committed production properties still have no passwords).
 
+# SMTP
 spring.mail.username=your.address@gmail.com
 spring.mail.password=your-app-password
+# Optional overrides (defaults are in application.properties):
+# spring.mail.host=smtp.gmail.com
+# spring.mail.port=587
+# spring.mail.properties.mail.smtp.auth=true
+# spring.mail.properties.mail.smtp.starttls.enable=true
 
+# Envelope
 mail.from=your.address@gmail.com
 mail.from-name=
+
+# Input files
 mail.excel-file-path=C:\\path\\to\\recipients.xlsx
 mail.body-file-path=C:\\path\\to\\body.txt
 mail.attachment-path=C:\\path\\to\\resume.pdf
+mail.sent-log-path=sent-addresses.txt
+
+# Sending (mail.send-delay-ms is the named pause between real sends)
 # Leave batch off and dry-run on until you are ready to send.
 mail.batch-enabled=false
 mail.dry-run=true
 mail.html=false
-mail.sent-log-path=sent-addresses.txt
 mail.send-delay-ms=1000
 # One message to mail.test-send-to using the template; does not send the Excel list.
 mail.test-send-enabled=false
 mail.test-send-to=
+
+# Logging
+# logging.level.com.mailSender=INFO
+# logging.level.com.mailSender.smtp=DEBUG

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
+import com.mailSender.smtp.EmailSendingException;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -22,11 +23,20 @@ class MailBodyAttachmentTest {
   }
 
   @Test
+  void blankAndNullAttachmentPathsAreSkipped() {
+    MailBodyAttachment attachment = new MailBodyAttachment();
+    assertDoesNotThrow(
+        () ->
+            attachment.addAttachments(
+                mock(MimeMessageHelper.class), java.util.Arrays.asList(null, "  ")));
+  }
+
+  @Test
   void missingAttachmentFileFails() {
     MailBodyAttachment attachment = new MailBodyAttachment();
     MimeMessageHelper helper = mock(MimeMessageHelper.class);
     assertThrows(
-        RuntimeException.class,
+        EmailSendingException.class,
         () ->
             attachment.addAttachments(
                 helper, List.of(tempDir.resolve("missing.pdf").toString())));

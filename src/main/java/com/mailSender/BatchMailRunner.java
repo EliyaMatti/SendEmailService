@@ -1,9 +1,14 @@
 package com.mailSender;
 
+import com.mailSender.config.MailAppProperties;
 import com.mailSender.config.SmtpConfiguration;
+import com.mailSender.config.SmtpConfigurationException;
 import com.mailSender.excel.Contact;
+import com.mailSender.excel.ExcelProcessingException;
 import com.mailSender.excel.ExcelReadResult;
 import com.mailSender.excel.ExcelReader;
+import com.mailSender.smtp.EmailSendingException;
+import com.mailSender.template.TemplateValidationException;
 import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,6 +39,21 @@ public class BatchMailRunner implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
+    try {
+      runJob(args);
+    } catch (ExcelProcessingException
+        | TemplateValidationException
+        | SmtpConfigurationException
+        | EmailSendingException e) {
+      throw e;
+    } catch (RuntimeException e) {
+      log.error("Unexpected error while running the mail job", e);
+      throw new EmailSendingException(
+          "Unable to complete the mail job. See the application log for technical details.", e);
+    }
+  }
+
+  private void runJob(String... args) {
     if (mailAppProperties.isTestSendEnabled()) {
       runTestSend();
       return;
@@ -56,10 +76,12 @@ public class BatchMailRunner implements CommandLineRunner {
     if (mailAppProperties.isDryRun()) {
       log.info(
           "Mail batch dry-run: printing To and body; SMTP is skipped (set MAIL_DRY_RUN=false to send).");
+      logSmtpConnectionResult(true);
     } else {
       requireSmtpConfig();
       requireSentLogPath();
       requireReadableAttachmentIfSet();
+      logSmtpConnectionResult(false);
     }
     ExcelReadResult excel = ExcelReader.read(excelFilePath);
     mailBody.sendPersonalizedEmails(
@@ -70,24 +92,28 @@ public class BatchMailRunner implements CommandLineRunner {
     String bodyFilePath = mailAppProperties.getBodyFilePath();
     String testTo = mailAppProperties.getTestSendTo();
     if (isBlank(bodyFilePath)) {
-      throw new IllegalStateException(
-          "Test send requires mail.body-file-path (MAIL_BODY_FILE_PATH)");
+      throw new SmtpConfigurationException(
+          "Unable to send a test email because mail.body-file-path is not set.");
     }
     if (isBlank(testTo)) {
-      throw new IllegalStateException("Test send requires mail.test-send-to (MAIL_TEST_SEND_TO)");
+      throw new SmtpConfigurationException(
+          "Unable to send a test email because mail.test-send-to is not set.");
     }
     if (mailAppProperties.isDryRun()) {
       log.info(
           "Test send dry-run: one message to {}; SMTP is skipped (set MAIL_DRY_RUN=false to send).",
           testTo);
+      logSmtpConnectionResult(true);
     } else {
       requireSmtpConfig();
       requireReadableAttachmentIfSet();
+      logSmtpConnectionResult(false);
     }
     Contact recipient = testSendRecipient(testTo);
     boolean success = mailBody.sendTestEmail(bodyFilePath, recipient);
     if (!success) {
-      throw new IllegalStateException("Test email failed to " + testTo);
+      throw new EmailSendingException(
+          "Unable to send a test email to " + testTo + ". See the log for the reason.");
     }
   }
 
@@ -98,30 +124,43 @@ public class BatchMailRunner implements CommandLineRunner {
     }
     ExcelReadResult excel = ExcelReader.read(excelFilePath);
     if (excel.getContacts().isEmpty()) {
-      throw new IllegalStateException(
-          "Test send needs at least one valid Excel row to fill placeholders");
+      throw new ExcelProcessingException(
+          "Unable to send a test email because the Excel file has no valid contacts to fill placeholders.");
     }
-    return copyWithTo(excel.getContacts().get(0), testTo);
+    return contactForTestSend(excel.getContacts().get(0), testTo);
   }
 
-  static Contact copyWithTo(Contact sample, String testTo) {
+  static Contact contactForTestSend(Contact sample, String testTo) {
     Map<String, String> extras = new LinkedHashMap<>(sample.getPlaceholders());
     extras.remove("email");
     extras.remove("name");
     return new Contact(testTo, sample.getName(), extras);
   }
 
+  private void logSmtpConnectionResult(boolean dryRun) {
+    if (dryRun) {
+      log.info("SMTP connection skipped (dry-run)");
+      return;
+    }
+    log.info(
+        "SMTP connection ready: host={} port={} tlsEnabled={} authEnabled={}",
+        smtpConfiguration.getHost(),
+        smtpConfiguration.getPort(),
+        smtpConfiguration.isTlsEnabled(),
+        smtpConfiguration.isAuthEnabled());
+  }
+
   private void requireSmtpConfig() {
     if (!smtpConfiguration.isReadyForSend()) {
-      throw new IllegalStateException(
-          "Real send requires spring.mail.username, spring.mail.password, and mail.from");
+      throw new SmtpConfigurationException(
+          "Unable to send mail because SMTP username, password, and from address are required.");
     }
   }
 
   private void requireSentLogPath() {
     if (isBlank(mailAppProperties.getSentLogPath())) {
-      throw new IllegalStateException(
-          "Real send requires mail.sent-log-path (MAIL_SENT_LOG_PATH) so addresses are not mailed twice");
+      throw new SmtpConfigurationException(
+          "Unable to send mail because mail.sent-log-path is not set (needed to skip already-sent addresses).");
     }
   }
 
@@ -130,7 +169,9 @@ public class BatchMailRunner implements CommandLineRunner {
     if (attachmentPath != null && !attachmentPath.isBlank()) {
       File attachment = new File(attachmentPath);
       if (!attachment.isFile() || !attachment.canRead()) {
-        throw new IllegalStateException("Cannot read attachment: " + attachment.getAbsolutePath());
+        throw new SmtpConfigurationException(
+            "Unable to send mail because the attachment file could not be read: "
+                + attachment.getAbsolutePath());
       }
     }
   }
