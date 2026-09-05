@@ -8,6 +8,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -69,6 +70,13 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleUpload(MaxUploadSizeExceededException ex) {
     return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
         .body(ApiResponse.fail("FILE_TOO_LARGE", "The uploaded file exceeds the allowed size."));
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ApiResponse<Void>> handleConflict(DataIntegrityViolationException ex) {
+    log.debug("Database constraint violation", ex);
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.fail("CONSTRAINT_VIOLATION", "The request conflicts with stored data."));
   }
 
   @ExceptionHandler(Exception.class)

@@ -1,55 +1,32 @@
-# Direct Maven dependencies (M1-030)
+# Direct Maven dependencies (M2-071)
 
-Reviewed 2026-09-05 against `pom.xml`. Transitive jars (Logback, Jakarta Mail, POI xmlbeans, JUnit, Mockito, …) come from these starters; they are not listed as extra `<dependency>` entries. **No unused direct dependency was removed.** **No major version upgrades** (Spring Boot stays 3.2.3, POI stays 5.2.3).
+Reviewed against `pom.xml`. Transitive jars come from starters. **No unused direct dependency was removed.** Spring Boot stays **3.2.3**, POI **5.2.3**.
 
-## spring-boot-starter
+## Runtime
 
-| | |
+| Name | Purpose |
 | --- | --- |
-| Name | `org.springframework.boot:spring-boot-starter` |
-| Version | 3.2.3 (parent) |
-| Purpose | CLI Spring context, logging, autoconfigure (`MailSenderApplication`, `BatchMailRunner`) |
-| Used? | Yes |
-| Required? | Yes |
+| `spring-boot-starter` | CLI + logging |
+| `spring-boot-starter-web` | API servlet (`api` profile) |
+| `spring-boot-starter-validation` | Request DTOs |
+| `spring-boot-starter-security` | JWT filter chain (web only) |
+| `spring-boot-starter-data-jpa` | API persistence |
+| `spring-boot-starter-mail` | `JavaMailSender` |
+| `spring-boot-starter-actuator` | health/info/metrics (mail health off) |
+| `flyway-core` | Migrations |
+| `postgresql` | API database |
+| `jjwt-*` | JWT |
+| `poi-ooxml` 5.2.3 | `.xlsx` |
+| `commons-csv` 1.10.0 | API CSV importer |
+| `springdoc-openapi-starter-webmvc-ui` 2.3.0 | OpenAPI UI |
 
-## spring-boot-starter-mail
+## Test
 
-| | |
+| Name | Purpose |
 | --- | --- |
-| Name | `org.springframework.boot:spring-boot-starter-mail` |
-| Version | 3.2.3 (parent) |
-| Purpose | `JavaMailSender`, `MimeMessageHelper`, `MailProperties` (`SmtpEmailSender`) |
-| Used? | Yes |
-| Required? | Yes |
+| `spring-boot-starter-test` | JUnit 5, Mockito, MockMvc |
+| `h2` | Flyway-compatible API tests |
 
-## spring-boot-starter-test
+## Plugins
 
-| | |
-| --- | --- |
-| Name | `org.springframework.boot:spring-boot-starter-test` |
-| Version | 3.2.3 (parent), `test` scope |
-| Purpose | JUnit 5, Mockito, Spring Test (`@SpringBootTest`, `@MockBean`) |
-| Used? | Yes |
-| Required? | Yes (tests) |
-
-## poi-ooxml
-
-| | |
-| --- | --- |
-| Name | `org.apache.poi:poi-ooxml` |
-| Version | 5.2.3 |
-| Purpose | `.xlsx` read (`XSSFWorkbook` in `ExcelReader`) |
-| Used? | Yes |
-| Required? | Yes |
-
-Not added: `spring-boot-starter-web` (no HTTP API). Not present: Maven Wrapper.
-
-## Build plugins
-
-| Name | Version | Purpose | Used? | Required? |
-| --- | --- | --- | --- | --- |
-| `spring-boot-maven-plugin` | 3.2.3 (parent) | `mvn spring-boot:run`, executable jar | Yes | Yes |
-| `jacoco-maven-plugin` | 0.8.11 (pinned; Boot 3.2 line) | Coverage report for excel/template/campaign (M1-023) | Yes | Yes for that report |
-| `spotless-maven-plugin` | 2.43.0 | Google Java Format | Optional locally | Not required to compile |
-
-Spotless is not bound to `verify` by default; it is unused at runtime.
+`spring-boot-maven-plugin`, `jacoco-maven-plugin` (excel/template/campaign), `spotless-maven-plugin` (optional format; not bound to verify).

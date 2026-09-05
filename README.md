@@ -229,9 +229,23 @@ The default Spring profile is **`development`**. Use **`production`** for a depl
 | `DB_USERNAME` | PostgreSQL username | `excelmail` |
 | `DB_PASSWORD` | PostgreSQL password (never commit) | empty |
 | `APP_JWT_SECRET` | JWT HMAC secret (`api` profile, ≥32 chars) | empty |
-| `APP_ENCRYPTION_KEY` | SMTP password encryption key (`api` profile) | empty |
+| `APP_ENCRYPTION_KEY` | Base64 AES key for SMTP passwords (`api` profile, 16 or 32 bytes) | empty |
+| `APP_JWT_EXPIRATION_MS` | JWT lifetime | `86400000` |
+| `EXCELMAIL_WORKER_ENABLED` | Campaign poller on `api` profile | `true` (tests: `false`) |
 
-CLI batch instructions stay in this README. For the HTTP API, set `SPRING_PROFILES_ACTIVE=api` (and usually `development,api`), provide `DB_*` (never commit `DB_PASSWORD`), and run Flyway against local Postgres. Default `mvn spring-boot:run` still does **not** need a database.
+CLI batch instructions stay in this README. HTTP API: [docs/API.md](docs/API.md), database: [docs/DATABASE.md](docs/DATABASE.md), security: [docs/SECURITY.md](docs/SECURITY.md).
+
+### API mode (`api` profile)
+
+```
+SPRING_PROFILES_ACTIVE=api
+DB_PASSWORD=... APP_JWT_SECRET=... APP_ENCRYPTION_KEY=...
+mvn spring-boot:run
+```
+
+Default `mvn spring-boot:run` stays CLI (`WebApplicationType.NONE`) and does **not** need PostgreSQL. The `api` profile starts a servlet, runs Flyway, and does **not** load `BatchMailRunner`. Campaign sending is done by `CampaignWorker`, not on HTTP threads. Keep `MAIL_DRY_RUN=true` unless you intend real SMTP. Automated tests mock `JavaMailSender` / `EmailSender`.
+
+OpenAPI: `/v3/api-docs` and `/swagger-ui.html`. Actuator: `/actuator/health`, `/actuator/info`, `/actuator/metrics` (no env dump, mail health disabled).
 
 Failures use typed runtime exceptions (`ExcelProcessingException`, `TemplateValidationException`, `SmtpConfigurationException`, `EmailSendingException`) with the same operator messages as before. Invalid Excel rows are skipped rather than thrown (`InvalidContactException` is not used).
 
