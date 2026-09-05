@@ -143,6 +143,54 @@ class ExcelReaderTest {
   }
 
   @Test
+  @DisplayName("Nine consecutive empty rows still allow later contacts")
+  void nineConsecutiveEmptyRowsDoNotStopReading() throws Exception {
+    Path excel =
+        writeXlsx(
+            "nine-empty-rows.xlsx",
+            sheet -> {
+              writeRow(sheet, 0, "Email", "Name");
+              writeRow(sheet, 1, "keep@example.com", "Keep");
+              for (int i = 2; i <= 10; i++) {
+                writeRow(sheet, i, "   ", "   ");
+              }
+              writeRow(sheet, 11, "after@example.com", "After");
+            });
+
+    ExcelReadResult result = ExcelReader.read(excel.toString());
+    assertEquals(2, result.getContacts().size());
+    assertEquals("keep@example.com", result.getContacts().get(0).getEmail());
+    assertEquals("after@example.com", result.getContacts().get(1).getEmail());
+    assertEquals(11, result.getTotalRows());
+    assertEquals(2, result.getValid());
+    assertEquals(9, result.getInvalid());
+  }
+
+  @Test
+  @DisplayName("Ten consecutive empty rows stop reading")
+  void tenConsecutiveEmptyRowsStopReading() throws Exception {
+    Path excel =
+        writeXlsx(
+            "ten-empty-rows.xlsx",
+            sheet -> {
+              writeRow(sheet, 0, "Email", "Name");
+              writeRow(sheet, 1, "keep@example.com", "Keep");
+              for (int i = 2; i <= 11; i++) {
+                writeRow(sheet, i, "   ", "   ");
+              }
+              writeRow(sheet, 12, "ignored@example.com", "Ignored");
+            });
+
+    ExcelReadResult result = ExcelReader.read(excel.toString());
+    assertEquals(1, result.getContacts().size());
+    assertEquals("keep@example.com", result.getContacts().get(0).getEmail());
+    assertEquals(11, result.getTotalRows());
+    assertEquals(1, result.getValid());
+    assertEquals(10, result.getInvalid());
+    assertEquals(0, result.getDuplicates());
+  }
+
+  @Test
   @DisplayName("Multiple columns")
   void multipleColumnsBecomePlaceholders() throws Exception {
     Path excel =
