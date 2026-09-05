@@ -43,6 +43,7 @@ public class ExcelReader {
       placeholderKeys.addAll(columns.extraKeys());
 
       List<Contact> contacts = new ArrayList<>();
+      List<String> rowErrors = new ArrayList<>();
       Set<String> seenEmails = new LinkedHashSet<>();
       int totalRows = 0;
       int invalid = 0;
@@ -57,6 +58,7 @@ public class ExcelReader {
         if (row == null) {
           consecutiveEmptyRows++;
           invalid++;
+          rowErrors.add("Row " + rowNumber + ": Missing email");
           log.warn("Skipping row {}: empty row", rowNumber);
           if (stopAfterConsecutiveEmptyRows(consecutiveEmptyRows, rowNumber)) {
             break;
@@ -69,6 +71,7 @@ public class ExcelReader {
         if (ExcelValidator.isEmptyRow(email, name, extras)) {
           consecutiveEmptyRows++;
           invalid++;
+          rowErrors.add("Row " + rowNumber + ": Missing email");
           log.warn("Skipping row {}: empty row", rowNumber);
           if (stopAfterConsecutiveEmptyRows(consecutiveEmptyRows, rowNumber)) {
             break;
@@ -78,16 +81,19 @@ public class ExcelReader {
         consecutiveEmptyRows = 0;
         if (email.isBlank()) {
           invalid++;
+          rowErrors.add("Row " + rowNumber + ": Missing email");
           log.warn("Skipping row {}: blank email", rowNumber);
           continue;
         }
         if (!ExcelValidator.isValidEmail(email)) {
           invalid++;
+          rowErrors.add("Row " + rowNumber + ": Invalid email format");
           log.warn("Skipping row {}: invalid email '{}'", rowNumber, email);
           continue;
         }
         if (ExcelValidator.isDuplicate(email, seenEmails)) {
           duplicates++;
+          rowErrors.add("Row " + rowNumber + ": Duplicate email");
           log.warn("Skipping row {}: duplicate email '{}'", rowNumber, email);
           continue;
         }
@@ -97,7 +103,7 @@ public class ExcelReader {
 
       ExcelReadResult result =
           new ExcelReadResult(
-              contacts, totalRows, contacts.size(), invalid, duplicates, placeholderKeys);
+              contacts, totalRows, contacts.size(), invalid, duplicates, placeholderKeys, rowErrors);
       log.info("Excel file loaded: {}", path.getFileName());
       log.info("Total rows: {}", result.getTotalRows());
       log.info("Valid contacts: {}", result.getValid());

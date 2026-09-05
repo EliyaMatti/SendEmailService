@@ -1,8 +1,10 @@
 # SendEmailService
 
-A Spring Boot **command-line** app (no HTTP API). On startup it can read a recipient list from Excel, fill a UTF-8 body template with `{{placeholders}}`, optionally attach a file, and send mail over SMTP.
+A Spring Boot **command-line** app by default (no HTTP). On startup it can read a recipient list from Excel, fill a UTF-8 body template with `{{placeholders}}`, optionally attach a file, and send mail over SMTP.
 
 It is meant for one batch per process: enable the batch, run once, then the JVM exits. It is not a long-running mail server.
+
+An optional **`api` profile** (`SPRING_PROFILES_ACTIVE=api`) starts a servlet container for Milestone 2 REST work. Default `mvn spring-boot:run` stays `WebApplicationType.NONE` (no Tomcat). The batch runner is not loaded on `api`, so HTTP startup does not send mail.
 
 ## What it does
 
@@ -187,13 +189,13 @@ If the recipient list is empty after skipping blanks/invalid emails, the job log
 
 Named settings live in `src/main/resources/application.properties` (grouped: SMTP, files, sending, logging). Campaign keys bind to `MailAppProperties`; SMTP host, port, credentials, and STARTTLS bind to `SmtpConfiguration`. Inter-send pause is `mail.send-delay-ms` (env `MAIL_SEND_DELAY_MS`) — there is no hardcoded `Thread.sleep(60000)`. Logging levels are `logging.level.root` and `logging.level.com.mailSender`.
 
-The default Spring profile is **`development`**. Use **`production`** for a deploy-shaped config that still contains **no passwords**. Activate with `SPRING_PROFILES_ACTIVE=production` or `--spring.profiles.active=production`. Put real credentials only in the environment or gitignored `application-local.properties`. Both profiles keep batch off and dry-run on unless you override those flags.
+The default Spring profile is **`development`**. Use **`production`** for a deploy-shaped config that still contains **no passwords**. Use **`api`** to start the servlet (Milestone 2); combine as `development,api` if needed. Activate with `SPRING_PROFILES_ACTIVE` or `--spring.profiles.active`. Put real credentials only in the environment or gitignored `application-local.properties`. CLI and API profiles keep batch off and dry-run on unless you override those flags.
 
 ### Environment variables
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
-| `SPRING_PROFILES_ACTIVE` | Spring profile (`development` or `production`) | `development` (via `spring.profiles.default`) |
+| `SPRING_PROFILES_ACTIVE` | Spring profile (`development`, `production`, and/or `api`) | `development` (via `spring.profiles.default`) |
 | `MAIL_USERNAME` | SMTP username | empty |
 | `MAIL_PASSWORD` | SMTP password (Gmail App Password) | empty |
 | `MAIL_HOST` | SMTP host | `smtp.gmail.com` |
@@ -221,8 +223,29 @@ The default Spring profile is **`development`**. Use **`production`** for a depl
 | `LOGGING_LEVEL_ROOT` | Root log level | `INFO` |
 | `LOGGING_LEVEL_MAILSENDER` | `com.mailSender` log level | `INFO` |
 | `LOGGING_LEVEL_SMTP` | `com.mailSender.smtp` log level | `INFO` |
+| `DB_HOST` | PostgreSQL host (`api` profile) | `localhost` |
+| `DB_PORT` | PostgreSQL port | `5432` |
+| `DB_NAME` | PostgreSQL database name | `excelmail` |
+| `DB_USERNAME` | PostgreSQL username | `excelmail` |
+| `DB_PASSWORD` | PostgreSQL password (never commit) | empty |
+| `APP_JWT_SECRET` | JWT HMAC secret (`api` profile, ≥32 chars) | empty |
+| `APP_ENCRYPTION_KEY` | Base64 AES key for SMTP passwords (`api` profile, 16 or 32 bytes) | empty |
+| `APP_JWT_EXPIRATION_MS` | JWT lifetime | `86400000` |
+| `EXCELMAIL_WORKER_ENABLED` | Campaign poller on `api` profile | `true` (tests: `false`) |
 
-Defaults in `application.properties` match this table. Real SMTP runs when dry-run is off **and** either the batch is enabled or test-send is enabled. SMTP connection settings bind through Spring `MailProperties` into `SmtpConfiguration`; campaign paths and sending flags bind through `MailAppProperties`. The SMTP password is never written to logs.
+CLI batch instructions stay in this README. HTTP API: [docs/API.md](docs/API.md), database: [docs/DATABASE.md](docs/DATABASE.md), security: [docs/SECURITY.md](docs/SECURITY.md).
+
+### API mode (`api` profile)
+
+```
+SPRING_PROFILES_ACTIVE=api
+DB_PASSWORD=... APP_JWT_SECRET=... APP_ENCRYPTION_KEY=...
+mvn spring-boot:run
+```
+
+Default `mvn spring-boot:run` stays CLI (`WebApplicationType.NONE`) and does **not** need PostgreSQL. The `api` profile starts a servlet, runs Flyway, and does **not** load `BatchMailRunner`. Campaign sending is done by `CampaignWorker`, not on HTTP threads. Keep `MAIL_DRY_RUN=true` unless you intend real SMTP. Automated tests mock `JavaMailSender` / `EmailSender`.
+
+OpenAPI: `/v3/api-docs` and `/swagger-ui.html`. Actuator: `/actuator/health`, `/actuator/info`, `/actuator/metrics` (no env dump, mail health disabled).
 
 Failures use typed runtime exceptions (`ExcelProcessingException`, `TemplateValidationException`, `SmtpConfigurationException`, `EmailSendingException`) with the same operator messages as before. Invalid Excel rows are skipped rather than thrown (`InvalidContactException` is not used).
 

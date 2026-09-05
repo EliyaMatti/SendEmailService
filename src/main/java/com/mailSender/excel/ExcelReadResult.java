@@ -13,6 +13,7 @@ public final class ExcelReadResult {
   private final int invalid;
   private final int duplicates;
   private final Set<String> placeholderKeys;
+  private final List<String> rowErrors;
 
   public ExcelReadResult(
       List<Contact> contacts,
@@ -21,6 +22,17 @@ public final class ExcelReadResult {
       int invalid,
       int duplicates,
       Set<String> placeholderKeys) {
+    this(contacts, totalRows, valid, invalid, duplicates, placeholderKeys, List.of());
+  }
+
+  public ExcelReadResult(
+      List<Contact> contacts,
+      int totalRows,
+      int valid,
+      int invalid,
+      int duplicates,
+      Set<String> placeholderKeys,
+      List<String> rowErrors) {
     this.contacts = List.copyOf(contacts);
     this.totalRows = totalRows;
     this.valid = valid;
@@ -28,6 +40,7 @@ public final class ExcelReadResult {
     this.duplicates = duplicates;
     this.placeholderKeys =
         Collections.unmodifiableSet(new LinkedHashSet<>(placeholderKeys));
+    this.rowErrors = rowErrors == null ? List.of() : List.copyOf(rowErrors);
   }
 
   public List<Contact> getContacts() {
@@ -52,6 +65,10 @@ public final class ExcelReadResult {
 
   public Set<String> getPlaceholderKeys() {
     return placeholderKeys;
+  }
+
+  public List<String> getRowErrors() {
+    return rowErrors;
   }
 
   public String summary() {

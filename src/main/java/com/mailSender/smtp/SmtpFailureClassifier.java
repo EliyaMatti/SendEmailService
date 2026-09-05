@@ -11,11 +11,11 @@ import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.MailParseException;
 import org.springframework.mail.MailSendException;
 
-final class SmtpFailureClassifier {
+public final class SmtpFailureClassifier {
 
   private SmtpFailureClassifier() {}
 
-  static String userMessage(String to, Throwable error) {
+  public static String userMessage(String to, Throwable error) {
     if (matches(error, SmtpFailureClassifier::isAuthentication)) {
       return "SMTP authentication failed. Check MAIL_USERNAME and MAIL_PASSWORD (for Gmail, use an App Password).";
     }
@@ -35,6 +35,12 @@ final class SmtpFailureClassifier {
       return "SMTP server rejected the message to " + to + ".";
     }
     return "Unable to send email to " + to + ".";
+  }
+
+  public static boolean isPermanent(Throwable error) {
+    return matches(error, SmtpFailureClassifier::isInvalidRecipient)
+        || matches(error, SmtpFailureClassifier::isAuthentication)
+        || matches(error, SmtpFailureClassifier::isConfiguration);
   }
 
   private static boolean matches(Throwable error, java.util.function.Predicate<Throwable> test) {

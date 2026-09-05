@@ -1,5 +1,5 @@
 ---
-description: Session start — read AGENTS.md, DEVELOPMENT_TASKS.md, AGENT_WORKFLOW.md
+description: Session start — read AGENTS.md and the active milestone document
 alwaysApply: true
 ---
 
@@ -8,7 +8,7 @@ alwaysApply: true
 At the beginning of implementation work:
 
 1. Read `AGENTS.md`.
-2. Read `DEVELOPMENT_TASKS.md` and `AGENT_WORKFLOW.md`.
-3. Take the first incomplete task in **Suggested order**. Discovery (M1-001 → M1-003) first only if those IDs are still open. If the user (or the M1 orchestrator) names a start ID such as M1-016, use that queue instead of restarting discovery.
+2. If the user is working on **Milestone 2** (SaaS backend) or does not name a milestone: read `DEVELOPMENT-MILESTONE2.md` and take the first incomplete **M2-*** ID in **Suggested order**. Discovery is M2-001 → M2-002.
+3. If the user is working on **Milestone 1**: read `DEVELOPMENT_TASKS.md` and `AGENT_WORKFLOW.md`. Take the first incomplete **M1-*** ID. Do not restart M1-001 when M1 is already complete.
 
-Do not skip discovery when it is still incomplete. Do not expand scope past the current ID unless the user asks.
+Do not expand scope past the current ID unless the user asks. Do not implement Milestone 3+ (frontend, billing, tracking pixels) during Milestone 2.

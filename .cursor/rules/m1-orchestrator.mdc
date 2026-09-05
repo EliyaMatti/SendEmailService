@@ -1,9 +1,12 @@
 ---
 description: Orchestrate remaining Milestone 1 work from M1-016 through M1-035
-alwaysApply: true
+alwaysApply: false
+globs: "{DEVELOPMENT_TASKS.md,AGENT_WORKFLOW.md}"
 ---
 
 # Milestone 1 orchestrator (from M1-016)
+
+Use only when the user is finishing **Milestone 1** (`DEVELOPMENT_TASKS.md`). If the active document is `DEVELOPMENT-MILESTONE2.md`, ignore this rule.
 
 When implementing Milestone 1 remaining work:
 
@@ -11,4 +14,4 @@ When implementing Milestone 1 remaining work:
 2. Start at the first incomplete ID in **M1-016 → M1-035** (do not restart M1-001).
 3. One ID per pass unless `DEVELOPMENT_TASKS.md` names a tightly coupled pair.
 4. Mark `[~]` while in progress; `[x]` only after `mvn -q test` and verification without live SMTP.
-5. After M1-035, write the §22 final report. Do not implement Milestone 2.
+5. After M1-035, write the §22 final report. Do not implement Milestone 2 **during a Milestone 1 pass**.
