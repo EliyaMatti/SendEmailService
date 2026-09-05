@@ -30,6 +30,6 @@ class OpenApiAndActuatorTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("UP"));
     mockMvc.perform(get("/actuator/info")).andExpect(status().isOk());
-    mockMvc.perform(get("/actuator/env")).andExpect(status().isNotFound());
+    mockMvc.perform(get("/actuator/env")).andExpect(status().isForbidden());
   }
 }
