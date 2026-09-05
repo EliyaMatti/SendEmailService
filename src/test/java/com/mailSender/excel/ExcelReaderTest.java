@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
@@ -446,8 +447,10 @@ class ExcelReaderTest {
       }
     }
     Logger logger = (Logger) LoggerFactory.getLogger(ExcelReader.class);
+    Level previous = logger.getLevel();
     ListAppender<ILoggingEvent> appender = new ListAppender<>();
     appender.start();
+    logger.setLevel(Level.INFO);
     logger.addAppender(appender);
     try {
       ExcelReader.read(excel.toString());
@@ -460,6 +463,7 @@ class ExcelReaderTest {
       assertTrue(appender.list.stream().noneMatch(e -> e.getFormattedMessage().toLowerCase().contains("password")));
     } finally {
       logger.detachAppender(appender);
+      logger.setLevel(previous);
     }
   }
 

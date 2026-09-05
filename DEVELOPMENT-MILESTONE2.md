@@ -245,7 +245,7 @@ Mark `[~]` before starting. Mark `[x]` only after implementation, `mvn -q test`,
 
 # PHASE 1 — Project Assessment
 
-## M2-001 — Inspect Milestone 1 implementation [ ]
+## M2-001 — Inspect Milestone 1 implementation [x]
 
 Inspect:
 
@@ -272,7 +272,7 @@ docs/MILESTONE2_ANALYSIS.md
 
 ---
 
-## M2-002 — Verify baseline [ ]
+## M2-002 — Verify baseline [x]
 
 Run:
 
