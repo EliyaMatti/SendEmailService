@@ -599,7 +599,7 @@ Support `{{Name}}`, `{{Email}}`, `{{Company}}` (case-insensitive, Milestone 1 ru
 
 # PHASE 9 — SMTP Configuration
 
-## M2-024 — Create SMTP accounts table [ ]
+## M2-024 — Create SMTP accounts table [x]
 
 ```text
 id
@@ -620,7 +620,7 @@ Tightly coupled with **M2-025**.
 
 ---
 
-## M2-025 — Encrypt SMTP credentials [ ]
+## M2-025 — Encrypt SMTP credentials [x]
 
 Do not store SMTP passwords as plaintext. Use encryption key + key version + ciphertext. Key from environment. Map decrypted values into existing `SmtpConfiguration` at send time only.
 
@@ -628,7 +628,7 @@ Tightly coupled with **M2-024**.
 
 ---
 
-## M2-026 — SMTP API [ ]
+## M2-026 — SMTP API [x]
 
 ```http
 POST   /api/v1/smtp
@@ -642,7 +642,7 @@ Never return the SMTP password.
 
 ---
 
-## M2-027 — SMTP test [ ]
+## M2-027 — SMTP test [x]
 
 Validate configuration, attempt connection/authentication, return success/failure with a safe error. Do not expose credentials. Automated tests must mock the connection; do not use real App Passwords in CI.
 
@@ -650,7 +650,7 @@ Validate configuration, attempt connection/authentication, return success/failur
 
 # PHASE 10 — Campaign Model
 
-## M2-028 — Create campaigns table [ ]
+## M2-028 — Create campaigns table [x]
 
 ```text
 id
@@ -676,7 +676,7 @@ Tightly coupled with **M2-029**.
 
 ---
 
-## M2-029 — Create campaign_recipients table [ ]
+## M2-029 — Create campaign_recipients table [x]
 
 ```text
 id
@@ -699,7 +699,7 @@ Tightly coupled with **M2-028**.
 
 ---
 
-## M2-030 — Campaign creation API [ ]
+## M2-030 — Campaign creation API [x]
 
 ```http
 POST /api/v1/campaigns
@@ -711,7 +711,7 @@ Validate that contact list, template, and SMTP account exist, belong to the orga
 
 # PHASE 11 — Campaign Lifecycle
 
-## M2-031 — Campaign details [ ]
+## M2-031 — Campaign details [x]
 
 ```http
 GET /api/v1/campaigns
@@ -722,7 +722,7 @@ Paginate lists.
 
 ---
 
-## M2-032 — Start campaign [ ]
+## M2-032 — Start campaign [x]
 
 ```http
 POST /api/v1/campaigns/{id}/start
@@ -732,7 +732,7 @@ Validate campaign, recipients, SMTP, template. Transition `READY → RUNNING`. D
 
 ---
 
-## M2-033 — Pause campaign [ ]
+## M2-033 — Pause campaign [x]
 
 ```http
 POST /api/v1/campaigns/{id}/pause
@@ -742,7 +742,7 @@ Allowed: `RUNNING → PAUSED`.
 
 ---
 
-## M2-034 — Resume campaign [ ]
+## M2-034 — Resume campaign [x]
 
 ```http
 POST /api/v1/campaigns/{id}/resume
@@ -752,7 +752,7 @@ Allowed: `PAUSED → RUNNING`.
 
 ---
 
-## M2-035 — Cancel campaign [ ]
+## M2-035 — Cancel campaign [x]
 
 ```http
 POST /api/v1/campaigns/{id}/cancel
@@ -764,7 +764,7 @@ Prevent new recipients from being processed after cancellation.
 
 # PHASE 12 — Background Email Processing
 
-## M2-036 — Design campaign worker [ ]
+## M2-036 — Design campaign worker [x]
 
 Safe background processing. Spring Scheduler or a simple poller is enough. Do **not** add Kafka for complexity. Worker should call `EmailComposer` + `EmailSender`. Honor `mail.dry-run` / per-tenant equivalent in non-prod.
 
@@ -772,7 +772,7 @@ Disable the worker in CLI mode. Do not send from the HTTP request thread. Keep p
 
 ---
 
-## M2-037 — Recipient processing [ ]
+## M2-037 — Recipient processing [x]
 
 ```text
 Campaign
@@ -796,19 +796,19 @@ Reuse Milestone 1 compose/send types.
 
 ---
 
-## M2-038 — Sending status [ ]
+## M2-038 — Sending status [x]
 
 Success: `PENDING → PROCESSING → SENT`. Failure: `PENDING → PROCESSING → FAILED`. Record safe failure information (classifier already exists in `SmtpFailureClassifier`).
 
 ---
 
-## M2-039 — Retry mechanism [ ]
+## M2-039 — Retry mechanism [x]
 
 Limited, configurable retries. Do not retry permanent failures indefinitely.
 
 ---
 
-## M2-040 — Prevent duplicate sends [ ]
+## M2-040 — Prevent duplicate sends [x]
 
 Protect against HTTP retries, restart, worker failure, and transaction retry. Use state transitions / locking / idempotency.
 
@@ -816,19 +816,19 @@ Protect against HTTP retries, restart, worker failure, and transaction retry. Us
 
 # PHASE 13 — Sending Controls
 
-## M2-041 — Configurable sending delay [ ]
+## M2-041 — Configurable sending delay [x]
 
 Configurable delay between sends/batches (map from existing `mail.send-delay-ms`). Do not hardcode.
 
 ---
 
-## M2-042 — Provider-aware limits [ ]
+## M2-042 — Provider-aware limits [x]
 
 Configuration for maximum recipients per campaign, maximum sends per interval, maximum daily usage. Do **not** bypass provider limits.
 
 ---
 
-## M2-043 — Campaign safety validation [ ]
+## M2-043 — Campaign safety validation [x]
 
 Before launch: recipient count, SMTP availability, template validity, required placeholders, campaign status, usage limits.
 
@@ -836,7 +836,7 @@ Before launch: recipient count, SMTP availability, template validity, required p
 
 # PHASE 14 — Usage Tracking
 
-## M2-044 — Create usage_records table [ ]
+## M2-044 — Create usage_records table [x]
 
 ```text
 id
@@ -851,7 +851,7 @@ updated_at
 
 ---
 
-## M2-045 — Usage service [ ]
+## M2-045 — Usage service [x]
 
 Track emails attempted/sent/failed, campaign count, contact count. Add a tenant-scoped read API (for example `GET /api/v1/usage`) so OpenAPI can document usage. Do **not** implement billing.
 

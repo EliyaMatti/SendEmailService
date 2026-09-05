@@ -29,4 +29,14 @@ public final class EmailComposer {
         "",
         attachments);
   }
+
+  public EmailMessage composeCampaign(Contact contact, String subject, String body, String from) {
+    return new EmailMessage(
+        contact.getEmail(),
+        TemplateRenderer.render(subject, contact),
+        TemplateRenderer.render(body, contact),
+        from == null ? "" : from,
+        "",
+        List.of());
+  }
 }
