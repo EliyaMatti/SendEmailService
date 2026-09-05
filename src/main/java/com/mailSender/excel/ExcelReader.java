@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 public class ExcelReader {
 
   private static final Logger log = LoggerFactory.getLogger(ExcelReader.class);
+  private static final int CONSECUTIVE_EMPTY_ROW_LIMIT = 10;
 
   public static ExcelReadResult read(String filePath) {
     Path path = ExcelValidator.requireXlsxFile(filePath);
@@ -47,24 +48,34 @@ public class ExcelReader {
       int invalid = 0;
       int duplicates = 0;
 
+      int consecutiveEmptyRows = 0;
       int startRow = columns.headerRow() ? sheet.getFirstRowNum() + 1 : sheet.getFirstRowNum();
       for (int rowIndex = startRow; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
         totalRows++;
         Row row = sheet.getRow(rowIndex);
         int rowNumber = rowIndex + 1;
         if (row == null) {
+          consecutiveEmptyRows++;
           invalid++;
           log.warn("Skipping row {}: empty row", rowNumber);
+          if (stopAfterConsecutiveEmptyRows(consecutiveEmptyRows, rowNumber)) {
+            break;
+          }
           continue;
         }
         String email = columns.email(row, formatter, evaluator);
         String name = columns.name(row, formatter, evaluator);
         Map<String, String> extras = columns.extras(row, formatter, evaluator);
         if (ExcelValidator.isEmptyRow(email, name, extras)) {
+          consecutiveEmptyRows++;
           invalid++;
           log.warn("Skipping row {}: empty row", rowNumber);
+          if (stopAfterConsecutiveEmptyRows(consecutiveEmptyRows, rowNumber)) {
+            break;
+          }
           continue;
         }
+        consecutiveEmptyRows = 0;
         if (email.isBlank()) {
           invalid++;
           log.warn("Skipping row {}: blank email", rowNumber);
@@ -103,6 +114,17 @@ public class ExcelReader {
     }
   }
 
+
+  private static boolean stopAfterConsecutiveEmptyRows(int consecutiveEmptyRows, int rowNumber) {
+    if (consecutiveEmptyRows < CONSECUTIVE_EMPTY_ROW_LIMIT) {
+      return false;
+    }
+    log.info(
+        "Stopped reading after {} consecutive empty rows at row {}",
+        CONSECUTIVE_EMPTY_ROW_LIMIT,
+        rowNumber);
+    return true;
+  }
 
   static String cellValue(Cell cell, DataFormatter formatter, FormulaEvaluator evaluator) {
     if (cell == null) {
