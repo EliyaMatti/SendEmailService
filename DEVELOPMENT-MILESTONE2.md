@@ -428,7 +428,7 @@ Organization-owned resources must contain or resolve to `organization_id`. Servi
 
 # PHASE 5 — Authentication
 
-## M2-011 — Implement registration [~]
+## M2-011 — Implement registration [x]
 
 ```http
 POST /api/v1/auth/register
@@ -446,7 +446,7 @@ Requirements: validate email and password, reject duplicates, hash password, cre
 
 ---
 
-## M2-012 — Implement login [ ]
+## M2-012 — Implement login [x]
 
 ```http
 POST /api/v1/auth/login
@@ -456,13 +456,13 @@ Return an authenticated token/session. Do not expose password information.
 
 ---
 
-## M2-013 — Implement authentication security [ ]
+## M2-013 — Implement authentication security [x]
 
 Implement password hashing, authentication mechanism, authorization, secure token handling, configurable secret, expiration, and basic rate limiting where appropriate. Document decisions in `docs/SECURITY.md` when that file exists (or in the analysis doc until M2-069).
 
 ---
 
-## M2-014 — Implement current-user endpoint [ ]
+## M2-014 — Implement current-user endpoint [x]
 
 ```http
 GET /api/v1/auth/me
@@ -474,7 +474,7 @@ Return safe user information. Never return `password_hash`, SMTP password, or se
 
 # PHASE 6 — Contact Lists
 
-## M2-015 — Create contact_lists table [ ]
+## M2-015 — Create contact_lists table [~]
 
 ```text
 id
