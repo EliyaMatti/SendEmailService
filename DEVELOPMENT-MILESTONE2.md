@@ -336,7 +336,7 @@ Adapt; do not create a second root package. Avoid unnecessary complexity.
 
 # PHASE 3 — PostgreSQL + Flyway
 
-## M2-005 — Configure PostgreSQL [~]
+## M2-005 — Configure PostgreSQL [x]
 
 Configure URL, username, password, driver, connection pool via environment variables, for example:
 
@@ -356,7 +356,7 @@ Tightly coupled with **M2-006**.
 
 ---
 
-## M2-006 — Configure Flyway [ ]
+## M2-006 — Configure Flyway [x]
 
 Enable Flyway. Verify (against a local or test database, not production):
 
@@ -370,7 +370,7 @@ Tightly coupled with **M2-005**.
 
 ---
 
-## M2-007 — Create users table [ ]
+## M2-007 — Create users table [x]
 
 Migration for `users`:
 
@@ -391,7 +391,7 @@ Requirements: unique email, indexes, timestamps, constraints.
 
 # PHASE 4 — Organization / Tenant Model
 
-## M2-008 — Create organizations table [ ]
+## M2-008 — Create organizations table [~]
 
 ```text
 id
