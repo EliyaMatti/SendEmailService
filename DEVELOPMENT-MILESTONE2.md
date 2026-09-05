@@ -525,7 +525,7 @@ Paginate list endpoints.
 
 # PHASE 7 — Excel / CSV Import API
 
-## M2-018 — Upload contact list [ ]
+## M2-018 — Upload contact list [x]
 
 ```http
 POST /api/v1/contact-lists/{id}/upload
@@ -535,7 +535,7 @@ Support `.xlsx` (reuse `ExcelReader` **as-is**) and `.csv` (new parser, do not f
 
 ---
 
-## M2-019 — Import validation [ ]
+## M2-019 — Import validation [x]
 
 Return a summary (same spirit as Milestone 1 logs):
 
@@ -552,7 +552,7 @@ Do not silently discard invalid rows.
 
 ---
 
-## M2-020 — Import errors [ ]
+## M2-020 — Import errors [x]
 
 Identify invalid rows without dumping unnecessary personal data:
 
