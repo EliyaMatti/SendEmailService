@@ -290,7 +290,7 @@ Do not send real mail. Do not require `MAIL_PASSWORD`.
 
 # PHASE 2 — Spring Boot Foundation
 
-## M2-003 — Establish Spring Boot web application [~]
+## M2-003 — Establish Spring Boot web application [x]
 
 The project is already Spring Boot CLI. **Add** web support; do not convert the only entrypoint to an always-on servlet.
 
@@ -306,7 +306,7 @@ Java stays **17+** (`pom.xml` `java.version` 17, Boot **3.2.3**) unless a later 
 
 ---
 
-## M2-004 — Define package structure [ ]
+## M2-004 — Define package structure [x]
 
 Recommended under `com.mailSender`:
 
@@ -336,7 +336,7 @@ Adapt; do not create a second root package. Avoid unnecessary complexity.
 
 # PHASE 3 — PostgreSQL + Flyway
 
-## M2-005 — Configure PostgreSQL [ ]
+## M2-005 — Configure PostgreSQL [~]
 
 Configure URL, username, password, driver, connection pool via environment variables, for example:
 

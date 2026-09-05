@@ -223,8 +223,13 @@ The default Spring profile is **`development`**. Use **`production`** for a depl
 | `LOGGING_LEVEL_ROOT` | Root log level | `INFO` |
 | `LOGGING_LEVEL_MAILSENDER` | `com.mailSender` log level | `INFO` |
 | `LOGGING_LEVEL_SMTP` | `com.mailSender.smtp` log level | `INFO` |
+| `DB_HOST` | PostgreSQL host (`api` profile) | `localhost` |
+| `DB_PORT` | PostgreSQL port | `5432` |
+| `DB_NAME` | PostgreSQL database name | `excelmail` |
+| `DB_USERNAME` | PostgreSQL username | `excelmail` |
+| `DB_PASSWORD` | PostgreSQL password (never commit) | empty |
 
-Defaults in `application.properties` match this table. Real SMTP runs when dry-run is off **and** either the batch is enabled or test-send is enabled. SMTP connection settings bind through Spring `MailProperties` into `SmtpConfiguration`; campaign paths and sending flags bind through `MailAppProperties`. The SMTP password is never written to logs.
+CLI batch instructions stay in this README. For the HTTP API, set `SPRING_PROFILES_ACTIVE=api` (and usually `development,api`), provide `DB_*` (never commit `DB_PASSWORD`), and run Flyway against local Postgres. Default `mvn spring-boot:run` still does **not** need a database.
 
 Failures use typed runtime exceptions (`ExcelProcessingException`, `TemplateValidationException`, `SmtpConfigurationException`, `EmailSendingException`) with the same operator messages as before. Invalid Excel rows are skipped rather than thrown (`InvalidContactException` is not used).
 

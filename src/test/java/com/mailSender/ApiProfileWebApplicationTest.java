@@ -10,12 +10,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("api")
-@TestPropertySource(
-    properties = {"mail.batch-enabled=false", "mail.dry-run=true", "mail.test-send-enabled=false"})
+@ActiveProfiles({"api", "apitest"})
 class ApiProfileWebApplicationTest {
 
   @MockBean private JavaMailSender javaMailSender;
