@@ -474,7 +474,7 @@ Return safe user information. Never return `password_hash`, SMTP password, or se
 
 # PHASE 6 — Contact Lists
 
-## M2-015 — Create contact_lists table [~]
+## M2-015 — Create contact_lists table [x]
 
 ```text
 id
@@ -490,7 +490,7 @@ Tightly coupled with **M2-016**.
 
 ---
 
-## M2-016 — Create contacts table [ ]
+## M2-016 — Create contacts table [x]
 
 ```text
 id
@@ -510,7 +510,7 @@ Tightly coupled with **M2-015**.
 
 ---
 
-## M2-017 — Contact list API [ ]
+## M2-017 — Contact list API [x]
 
 ```http
 POST   /api/v1/contact-lists

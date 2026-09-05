@@ -2,6 +2,8 @@ package com.mailSender.common.exception;
 
 import com.mailSender.common.response.ApiResponse;
 import com.mailSender.config.ApplicationProfiles;
+import com.mailSender.excel.ExcelProcessingException;
+import com.mailSender.template.TemplateValidationException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +58,11 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleDenied(AccessDeniedException ex) {
     return ResponseEntity.status(HttpStatus.FORBIDDEN)
         .body(ApiResponse.fail("ACCESS_DENIED", "You do not have access to this resource."));
+  }
+
+  @ExceptionHandler({ExcelProcessingException.class, TemplateValidationException.class})
+  public ResponseEntity<ApiResponse<Void>> handleDomain(RuntimeException ex) {
+    return ResponseEntity.badRequest().body(ApiResponse.fail("VALIDATION_ERROR", ex.getMessage()));
   }
 
   @ExceptionHandler(MaxUploadSizeExceededException.class)

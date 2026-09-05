@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @Profile(ApplicationProfiles.API)
@@ -24,9 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ContactListController {
 
   private final ContactListService contactLists;
+  private final ContactImportService imports;
 
-  public ContactListController(ContactListService contactLists) {
+  public ContactListController(ContactListService contactLists, ContactImportService imports) {
     this.contactLists = contactLists;
+    this.imports = imports;
   }
 
   @PostMapping
@@ -62,5 +66,13 @@ public class ContactListController {
       @PathVariable UUID id,
       @PageableDefault(size = 20) Pageable pageable) {
     return ApiResponse.ok(contactLists.listContacts(principal, id, pageable));
+  }
+
+  @PostMapping("/{id}/upload")
+  public ApiResponse<ImportSummaryResponse> upload(
+      @AuthenticationPrincipal AuthPrincipal principal,
+      @PathVariable UUID id,
+      @RequestParam("file") MultipartFile file) {
+    return ApiResponse.ok(imports.upload(principal, id, file));
   }
 }
