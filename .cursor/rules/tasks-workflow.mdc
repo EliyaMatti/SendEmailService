@@ -1,14 +1,16 @@
 ---
-description: How to complete DEVELOPMENT_TASKS.md IDs (definition of done)
-globs: "{DEVELOPMENT_TASKS.md,AGENT_WORKFLOW.md,AGENTS.md}"
+description: How to complete milestone task IDs (definition of done)
+globs: "{DEVELOPMENT_TASKS.md,DEVELOPMENT-MILESTONE2.md,AGENT_WORKFLOW.md,AGENTS.md}"
 alwaysApply: false
 ---
 
-# DEVELOPMENT_TASKS.md completion
+# Milestone task completion
 
-Follow `AGENT_WORKFLOW.md`. Per ID:
+**Milestone 2:** follow `DEVELOPMENT-MILESTONE2.md` (compatibility contract: do not change CLI Excel → SMTP behavior). Per M2 ID: implement, `mvn -q test` (existing tests stay green), verify without live SMTP, document, then `[x]`.
 
-- Match the bullets under that ID in `DEVELOPMENT_TASKS.md`.
+**Milestone 1:** follow `AGENT_WORKFLOW.md` and `DEVELOPMENT_TASKS.md`.
+
+- Match the bullets under that ID.
 - Ship tests with the change when the behavior is testable (`mvn test`).
 - Update README and `mail.*` config if you add keys or change defaults.
 - Check off: `- [ ]` → `- [x]` (or `[!]` if blocked).
