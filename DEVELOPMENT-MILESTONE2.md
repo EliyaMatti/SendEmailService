@@ -565,7 +565,7 @@ Row 31: Missing email
 
 # PHASE 8 — Email Templates
 
-## M2-021 — Create email_templates table [ ]
+## M2-021 — Create email_templates table [x]
 
 ```text
 id
@@ -579,7 +579,7 @@ updated_at
 
 ---
 
-## M2-022 — Template API [ ]
+## M2-022 — Template API [x]
 
 ```http
 POST   /api/v1/templates
@@ -591,7 +591,7 @@ DELETE /api/v1/templates/{id}
 
 ---
 
-## M2-023 — Template validation [ ]
+## M2-023 — Template validation [x]
 
 Support `{{Name}}`, `{{Email}}`, `{{Company}}` (case-insensitive, Milestone 1 rules). Reuse `TemplateValidator` / `TemplateRenderer`. Validate placeholders against imported contact columns when a list is selected.
 
