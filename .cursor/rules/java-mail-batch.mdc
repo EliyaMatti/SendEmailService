@@ -12,7 +12,7 @@ alwaysApply: false
 - Excel: skip headers, trim, skip invalid emails, `DataFormatter` for non-STRING cells (H3).
 - Log with SLF4J, not `System.out` / `printStackTrace` (L3).
 - `getPlaceholders()` should not expose a mutable map (L4).
-- Prefer `WebApplicationType.NONE` or no `starter-web` (L2). Do not add REST APIs unless asked.
+- CLI / default process: `WebApplicationType.NONE` (no Tomcat). Milestone 2 may add REST under `/api/v1/` on an **API profile** only; do not make servlet+Postgres required for CLI or existing `WebEnvironment.NONE` tests. Do not abort the send loop on one SMTP error (H1).
 
 ```java
 // ❌ BAD

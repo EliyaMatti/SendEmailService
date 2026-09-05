@@ -19,8 +19,11 @@ class MailProfileFilesTest {
     String production =
         Files.readString(
             Path.of("src/main/resources/application-production.properties"), StandardCharsets.UTF_8);
+    String api =
+        Files.readString(Path.of("src/main/resources/application-api.properties"), StandardCharsets.UTF_8);
     assertFalse(development.contains("spring.mail.password="));
     assertFalse(production.contains("spring.mail.password="));
+    assertFalse(api.contains("spring.mail.password="));
     assertFalse(production.contains("MAIL_PASSWORD="));
     assertFalse(production.toLowerCase().contains("app-password"));
   }

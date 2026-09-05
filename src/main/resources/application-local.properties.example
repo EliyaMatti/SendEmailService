@@ -37,3 +37,10 @@ mail.test-send-to=
 # Logging
 # logging.level.com.mailSender=INFO
 # logging.level.com.mailSender.smtp=DEBUG
+
+# API profile PostgreSQL (SPRING_PROFILES_ACTIVE=api). Do not commit real DB_PASSWORD.
+# DB_HOST=localhost
+# DB_PORT=5432
+# DB_NAME=excelmail
+# DB_USERNAME=excelmail
+# DB_PASSWORD=
