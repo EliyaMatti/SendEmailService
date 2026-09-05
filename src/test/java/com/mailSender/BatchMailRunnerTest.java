@@ -126,9 +126,9 @@ class BatchMailRunnerTest {
   }
 
   @Test
-  void copyWithToUsesTestAddressAndKeepsPlaceholders() {
+  void contactForTestSendUsesTestAddressAndKeepsPlaceholders() {
     Contact sample = new Contact("row@example.com", "Ada", Map.of("company", "Acme"));
-    Contact test = BatchMailRunner.copyWithTo(sample, "me@example.com");
+    Contact test = BatchMailRunner.contactForTestSend(sample, "me@example.com");
     assertEquals("me@example.com", test.getEmail());
     assertEquals("Ada", test.getName());
     assertEquals("Acme", test.getPlaceholders().get("company"));

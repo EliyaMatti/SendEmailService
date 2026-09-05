@@ -735,23 +735,25 @@ Keep technical details in logs. Verified with `mvn -q test` (no live SMTP).
 
 # 16. Phase 8 — Testing
 
-# M1-021 — Unit tests for Excel processing
+# M1-021 — Unit tests for Excel processing [x]
 
-Test:
+Test (in `ExcelReaderTest`, DisplayName per case):
 
-* Valid Excel
-* Empty Excel
-* Missing email column
-* Invalid emails
-* Duplicate emails
-* Empty rows
-* Multiple columns
+* [x] Valid Excel
+* [x] Empty Excel
+* [x] Missing email column
+* [x] Invalid emails
+* [x] Duplicate emails
+* [x] Empty rows
+* [x] Multiple columns
+
+Verified with `mvn -q test` (no live SMTP). Extra-column placeholders map to `Contact` keys.
 
 ---
 
-# M1-022 — Unit tests for template rendering
+# M1-022 — Unit tests for template rendering [x]
 
-Test:
+Test (in `TemplateRendererTest`; keys are case-insensitive):
 
 ```text
 {{Name}}
@@ -761,46 +763,62 @@ Test:
 
 Also test:
 
-* Missing field
-* Unknown placeholder
-* Empty value
-* Multiple placeholders
-* Empty template
+* [x] Missing field — omitted Excel column renders as empty
+* [x] Unknown placeholder — `{{Unknown}}` renders as empty (validator still rejects it before send; that is M1-023)
+* [x] Empty value
+* [x] Multiple placeholders
+* [x] Empty template
+
+Verified with `mvn -q test` (no live SMTP).
 
 ---
 
-# M1-023 — Unit tests for validation
+# M1-023 — Unit tests for validation [x]
 
 Test all validation rules.
+
+* [x] Excel: missing file, non-`.xlsx`, empty sheet, empty row, invalid email, duplicate (normalized) email — `ExcelValidatorTest`
+* [x] Template: empty/null subject and body, missing email/name keys, unknown placeholder, broken `{{` / stray `}}`, valid body — `TemplateValidatorTest`
+* [x] SMTP preflight: username, password, and from required — `SmtpConfigurationTest` (`isReadyForSend`)
 
 Target:
 
 > At least 80% coverage for the newly refactored core business logic.
 
-Do not manipulate coverage numbers artificially.
+JaCoCo reports `com.mailSender.excel`, `template`, and `campaign` after `mvn test` (`target/site/jacoco/index.html`). Measured 2026-09-05 (no live SMTP):
+
+```text
+Instructions: 98% (14 missed of 1,161)
+Branches:     84% (27 missed of 174)
+Lines:        98% (3 missed of 285)
+```
+
+Do not manipulate coverage numbers artificially. Verified with `mvn -q test`.
 
 ---
 
-# M1-024 — EmailSender tests
+# M1-024 — EmailSender tests [x]
 
 Do not send real emails from unit tests.
 
 Mock the SMTP/email provider dependency.
 
-Test:
+Test (`SmtpEmailSenderTest`, mocked `JavaMailSender`):
 
-* Successful send
-* Authentication failure
-* Connection failure
-* Invalid recipient
-* Timeout
-* Provider rejection
+* [x] Successful send
+* [x] Authentication failure
+* [x] Connection failure
+* [x] Invalid recipient
+* [x] Timeout
+* [x] Provider rejection
+
+Verified with `mvn -q test` (no live SMTP). Dry-run coverage remains in `SmtpEmailSenderDryRunTest`.
 
 ---
 
 # 17. Phase 9 — Integration Verification
 
-# M1-025 — End-to-end local test
+# M1-025 — End-to-end local test [x]
 
 Run:
 
@@ -822,9 +840,11 @@ Send Test Email
 
 Verify the complete workflow.
 
+Covered by `EndToEndLocalWorkflowTest`: real Excel + body files, `BatchMailRunner` test-send, first-row placeholders, To = `mail.test-send-to`. Transport is a mock `EmailSender` (no live SMTP). Verified with `mvn -q test`.
+
 ---
 
-# M1-026 — Regression test
+# M1-026 — Regression test [x]
 
 Verify that the original use case still works:
 
@@ -842,11 +862,13 @@ Send
 
 The refactoring must not remove existing functionality.
 
+Covered by `OriginalExcelSmtpRegressionTest`: `BatchMailRunner` batch (test-send off) still mails **each** Excel contact with the shared subject/body template. Transport is a mock `EmailSender` (no live SMTP). Verified with `mvn -q test`.
+
 ---
 
 # 18. Phase 10 — Documentation
 
-# M1-027 — Developer documentation
+# M1-027 — Developer documentation [x]
 
 Create/update:
 
@@ -860,19 +882,21 @@ docs/TECHNICAL_DEBT.md
 
 README must explain:
 
-* What the application does
-* Requirements
-* Installation
-* Configuration
-* How to run
-* Excel format
-* SMTP setup
-* How to send a test email
-* Troubleshooting
+* [x] What the application does
+* [x] Requirements
+* [x] Installation
+* [x] Configuration
+* [x] How to run
+* [x] Excel format
+* [x] SMTP setup
+* [x] How to send a test email
+* [x] Troubleshooting
+
+`docs/EXCEL_FORMAT.md` is **M1-028** (not this ID). Verified with `mvn -q test` (no live SMTP; docs-only).
 
 ---
 
-# M1-028 — Excel format documentation
+# M1-028 — Excel format documentation [x]
 
 Create:
 
@@ -897,104 +921,104 @@ Rahul       rahul@example.com  ABC
 Priya       priya@example.com  XYZ
 ```
 
+Linked from README. Verified with `mvn -q test` (no live SMTP).
+
 ---
 
 # 19. Phase 11 — Code Quality
 
-# M1-029 — Clean unused code
+# M1-029 — Clean unused code [x]
 
 After tests pass:
 
-* Remove unused imports.
-* Remove unused methods.
-* Remove dead code.
-* Remove duplicate code.
-* Rename unclear variables.
-* Improve class/method naming.
+* [x] Remove unused imports (none leftover in production after this pass).
+* [x] Remove unused methods / dead catch (`SmtpSendException` rethrow that nothing threw).
+* [x] Remove dead code.
+* [x] Remove duplicate code (`SmtpEmailSenderErrorTest`, duplicate empty-workbook Excel test).
+* [x] Rename unclear variables (`rowIndex`; `contactForTestSend`).
+* [x] Improve class/method naming (test-send helper only; no `MailBody` rewrite).
 
-Do NOT perform unrelated rewrites.
+Do NOT perform unrelated rewrites. Verified with `mvn -q test` (no live SMTP).
 
 ---
 
-# M1-030 — Dependency review
+# M1-030 — Dependency review [x]
 
-Review dependencies.
+Review dependencies. Full table: [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md).
 
-For each dependency:
-
-```text
-Name
-Version
-Purpose
-Used?
-Required?
-```
+| Name | Version | Purpose | Used? | Required? |
+| --- | --- | --- | --- | --- |
+| `spring-boot-starter` | 3.2.3 | CLI Spring context | Yes | Yes |
+| `spring-boot-starter-mail` | 3.2.3 | SMTP / JavaMail | Yes | Yes |
+| `spring-boot-starter-test` | 3.2.3 (test) | JUnit / Mockito | Yes | Yes (tests) |
+| `poi-ooxml` | 5.2.3 | `.xlsx` | Yes | Yes |
 
 Remove unnecessary dependencies only after verifying they are unused.
 
 Do not upgrade major versions unnecessarily during this milestone.
 
+No direct dependency was unused. JaCoCo plugin version pinned to **0.8.11** (Spring Boot 3.2 line; not a major upgrade). Verified with `mvn -q test` (no live SMTP).
+
 ---
 
 # 20. Final Milestone Verification
 
-# M1-031 — Full build
+# M1-031 — Full build [x]
 
-Run the project's correct build command.
-
-Examples:
+Verified 2026-09-05 (no live SMTP; tests use mocked `JavaMailSender` / dry-run).
 
 ```bash
 mvn clean verify
 ```
 
-or the project's equivalent.
+**Result:** `BUILD SUCCESS`. Surefire: **115** tests, **0** failures, **0** errors, **0** skipped. Follow-up `mvn -q test` also passed.
 
-The build must pass.
+This ID is the Maven lifecycle (clean + compile + test + package/verify). The dedicated full-suite write-up is **M1-032**.
 
 ---
 
-# M1-032 — Full test suite
+# M1-032 — Full test suite [x]
 
-Run all tests.
-
-Expected:
+Verified 2026-09-05 with `mvn -q test` (no live SMTP; `JavaMailSender` mocked; dry-run paths do not send).
 
 ```text
 Tests: PASS
-Build: PASS
+Build: PASS (test compile + Surefire)
 No compilation errors
-No exposed credentials
+No exposed credentials: test fixtures use placeholders only (e.g. `super-secret-app-password` is asserted *not* to appear in logs). Repo-wide secret scan is M1-033.
 ```
+
+Surefire (`target/surefire-reports`): **115** tests, **0** failures, **0** errors, **0** skipped across **30** test classes.
 
 ---
 
-# M1-033 — Security scan
+# M1-033 — Security scan [x]
 
-Search the repository for:
+Searched the working tree (source, tests, committed properties, examples, README, `.gitignore`) for `password`, `secret`, `token`, `apikey`, and `smtp`. Confirmed **no real credentials** in current committed files. Verified 2026-09-05 with `mvn -q test` (no live SMTP). Repeatable checks live in `MailProfileFilesTest`.
 
 ```text
-password
-secret
-token
-apikey
-smtp
+password — property/env names, operator copy, tests (placeholder `secret` / `super-secret-app-password` asserted not logged)
+secret   — test fixtures only
+token    — task/docs wording; no API tokens in source
+apikey   — task wording only; no API keys in source
+smtp     — host names (`smtp.gmail.com`), package `com.mailSender.smtp`, MAIL_SMTP_* flags
 ```
 
-Confirm no real credentials are committed.
+**`.gitignore`:** `application-local.properties`, `.env`, `sent-addresses.txt`. Neither `.env` nor `application-local.properties` is tracked (`git ls-files`).
 
-Check:
+**Environment:** `application.properties` binds `spring.mail.password=${MAIL_PASSWORD:${SMTP_PASSWORD:}}` (empty default). `development` / `production` profiles have no password keys. `.env.example` has empty `MAIL_PASSWORD=` / `SMTP_PASSWORD=`. Example local file uses placeholder `your-app-password`.
 
-* `.gitignore`
-* environment configuration
-* logs
-* exception messages
+**Logs:** SMTP ready log is host/port/tls/auth only (`BatchMailRunner.logSmtpConnectionResult`). `SmtpConfiguration.toString()` uses `password=***`. Lifecycle logger does not log credentials.
+
+**Exception messages:** Operator text names `MAIL_PASSWORD` as a setting to check; it does not include the password value. Classifier matches provider phrases such as “username and password not accepted” without echoing credentials.
+
+**I1:** If an App Password was ever committed historically, revoke it in Google Account settings. Do not rewrite git history unless the user asks.
 
 ---
 
-# M1-034 — Final architecture review
+# M1-034 — Final architecture review [x]
 
-Verify that the architecture follows:
+Verified 2026-09-05 (imports inspected; `ArchitectureLayeringTest`; `mvn -q test`; no live SMTP). The CLI pipeline matches:
 
 ```text
 Excel Layer
@@ -1010,17 +1034,26 @@ EmailSender
 SMTP
 ```
 
-No unnecessary circular dependencies.
+| Layer | Types |
+| --- | --- |
+| Excel | `ExcelReader`, `ExcelValidator` |
+| Domain | `Contact` |
+| Template | `EmailTemplate`, `TemplateRenderer`, `TemplateValidator` |
+| Email model | `EmailMessage` via `EmailComposer` |
+| EmailSender | `smtp.EmailSender` |
+| SMTP | `SmtpEmailSender` (dry-run skips `JavaMailSender`) |
+
+**Circular dependencies:** none between excel / template / campaign / smtp / config. Edges are one-way down the pipeline (`template` → `Contact`; `campaign` → template + `Contact`; `smtp` → `EmailMessage`). `config` does not import those packages.
+
+**Accepted leftover (not a layer cycle):** root `MailBodyAttachment` ↔ `smtp` (`SmtpEmailSender` uses the helper; the helper throws `EmailSendingException`). Campaign loop remains in `MailBody` above the packages. Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
-# M1-035 — Prepare for Milestone 2
+# M1-035 — Prepare for Milestone 2 [x]
 
-Create:
+Created [docs/NEXT_MILESTONE.md](docs/NEXT_MILESTONE.md) (documentation only). Linked from README. **None** of the Milestone 2 items were implemented (no web API, Postgres, Flyway, auth, persistence, or background workers). Verified 2026-09-05 with `mvn -q test` (no live SMTP).
 
-`docs/NEXT_MILESTONE.md`
-
-Document what will be required for the next phase:
+Documented requirements:
 
 ```text
 Spring Boot API
@@ -1035,96 +1068,84 @@ SMTP configuration persistence
 Background email processing
 ```
 
-Do NOT implement these in Milestone 1.
-
 ---
 
 # 21. Definition of Done
 
 Milestone 1 is complete ONLY when all of the following are true:
 
-* [ ] Existing application behavior is documented.
-* [ ] Existing application can still run.
-* [ ] Excel processing is separated.
-* [ ] Contact model exists.
-* [ ] Excel validation exists.
-* [ ] Template rendering is separated.
-* [ ] Email message model exists.
-* [ ] SMTP configuration is separated.
-* [ ] EmailSender abstraction exists.
-* [ ] Credentials are externalized.
-* [ ] Logging is implemented/improved.
-* [ ] Error handling is improved.
-* [ ] Unit tests exist.
-* [ ] Core refactored logic has approximately 80%+ test coverage.
-* [ ] End-to-end workflow has been verified.
-* [ ] Documentation has been updated.
-* [ ] No real credentials exist in Git.
-* [ ] Build passes.
-* [ ] Tests pass.
-* [ ] No unrelated features were implemented.
+* [x] Existing application behavior is documented.
+* [x] Existing application can still run.
+* [x] Excel processing is separated.
+* [x] Contact model exists.
+* [x] Excel validation exists.
+* [x] Template rendering is separated.
+* [x] Email message model exists.
+* [x] SMTP configuration is separated.
+* [x] EmailSender abstraction exists.
+* [x] Credentials are externalized.
+* [x] Logging is implemented/improved.
+* [x] Error handling is improved.
+* [x] Unit tests exist.
+* [x] Core refactored logic has approximately 80%+ test coverage.
+* [x] End-to-end workflow has been verified.
+* [x] Documentation has been updated.
+* [x] No real credentials exist in Git.
+* [x] Build passes.
+* [x] Tests pass.
+* [x] No unrelated features were implemented.
+
+Checked 2026-09-05 after M1-001–M1-035. Runtime remains the Excel → SMTP CLI (dry-run / mocked mail in tests). SaaS items in [docs/NEXT_MILESTONE.md](docs/NEXT_MILESTONE.md) were documented, not built.
 
 ---
 
 # 22. Agent Final Report
 
-**Scope of this write-up (2026-09-04):** M1-016 through M1-020 only. Earlier IDs M1-001–M1-015 are already `[x]`. IDs **M1-021–M1-035 are not complete**. §21 Definition of Done is **not** claimed.
-
-When remaining Milestone 1 tasks finish, replace this slice with a full M1-001–M1-035 report.
+**Scope:** ExcelMail Pro Milestone 1, tasks **M1-001 through M1-035**, closed 2026-09-05. No Milestone 2 / SaaS code.
 
 ## Completed
 
-**This pass (M1-016–M1-020):**
+**Discovery:** M1-001–M1-003 (`docs/PROJECT_ANALYSIS.md`, `BASELINE.md`, `TECHNICAL_DEBT.md`).
 
-* M1-016 — Centralize configuration (`MailAppProperties` / `mail.*`, `MailProperties` SMTP, `mail.send-delay-ms`)
-* M1-017 — `development` / `production` profiles; no passwords in committed profile files
-* M1-018 — Structured logs (startup/shutdown, Excel counts, SMTP ready/skipped without password, campaign/send/fail)
-* M1-019 — Typed exceptions (`ExcelProcessingException`, `TemplateValidationException`, `SmtpConfigurationException`, `EmailSendingException` / `SmtpSendException`)
-* M1-020 — Operator-facing messages; stack traces stay in logs (including unexpected NPE wrap)
+**Architecture & extract:** M1-004–M1-015 — `excel`, `template`, `smtp`, `campaign`, `config`; `Contact`; `EmailSender` / `SmtpEmailSender`; `EmailMessage` / `EmailComposer`; credentials off git; test-send.
 
-**Already complete before this pass:** M1-001 through M1-015 (discovery, Excel/template/SMTP extraction, credentials, EmailSender, test-send).
+**Config, logs, errors:** M1-016–M1-020 — `MailAppProperties`, profiles, structured logs, typed exceptions, operator messages.
+
+**Tests:** M1-021–M1-026 — Excel, template, validation/JaCoCo, mocked SMTP, local e2e, batch regression.
+
+**Docs & hygiene:** M1-027–M1-030 — README/`docs/`, `EXCEL_FORMAT.md`, unused-code cleanup, `DEPENDENCIES.md`.
+
+**Verify:** M1-031 `mvn clean verify`; M1-032 full suite; M1-033 secret scan; M1-034 layering; M1-035 `docs/NEXT_MILESTONE.md` only.
 
 ## Files Changed
 
-Primary artifacts for M1-016–M1-020 (created or updated):
+Representative Milestone 1 artifacts (not every test file):
 
-* `src/main/java/com/mailSender/config/MailAppProperties.java`
-* `src/main/java/com/mailSender/config/SmtpConfiguration.java`
-* `src/main/java/com/mailSender/config/ApplicationLifecycleLogger.java`
-* `src/main/java/com/mailSender/config/SmtpConfigurationException.java`
-* `src/main/java/com/mailSender/excel/ExcelProcessingException.java`
-* `src/main/java/com/mailSender/template/TemplateValidationException.java`
-* `src/main/java/com/mailSender/smtp/EmailSendingException.java`
-* `src/main/resources/application.properties`
-* `src/main/resources/application-development.properties`
-* `src/main/resources/application-production.properties`
-* `src/main/java/com/mailSender/MailSenderApplication.java`
-* `src/main/java/com/mailSender/BatchMailRunner.java`
-* `src/main/java/com/mailSender/MailBody.java`
-* `src/main/java/com/mailSender/excel/ExcelReader.java`
-* `src/main/java/com/mailSender/excel/ExcelValidator.java`
-* `src/main/java/com/mailSender/smtp/SmtpEmailSender.java`
-* `src/main/java/com/mailSender/smtp/SmtpFailureClassifier.java`
-* Tests under `src/test/java/com/mailSender/config/` plus updates to `BatchMailRunnerTest` and related exception tests
-* `README.md`, `.env.example`, `src/main/resources/application-local.properties.example`
+* Application: `MailSenderApplication`, `BatchMailRunner`, `MailBody`, `MailBodyAttachment`, `SentAddressLog`
+* `excel/`, `template/`, `campaign/`, `smtp/`, `config/`
+* `src/main/resources/application*.properties`, `.env.example`, `application-local.properties.example`
+* `README.md`, `docs/ARCHITECTURE.md`, `EXCEL_FORMAT.md`, `DEPENDENCIES.md`, `NEXT_MILESTONE.md`, `DEVELOPMENT_TASKS.md`
+* Tests under `src/test/java/com/mailSender/` (including `ArchitectureLayeringTest`, `MailProfileFilesTest`)
 
 ## Architecture Changes
 
-**Before:** SMTP and campaign settings were scattered (`@Value`, hardcoded delay, Gmail defaults mixed into beans). Logging was ad hoc. Failures often used `IllegalStateException`. Operator messages mixed stack/provider text.
+**Before:** Single-package CLI; Excel, template, and SMTP mixed; credentials at risk of being hardcoded; weak tests.
 
-**After:** `mail.*` binds through `MailAppProperties`; Spring `MailProperties` plus `SmtpConfiguration` describe SMTP (password never in `toString()`). Profiles `development` and `production` exist without committed secrets. Lifecycle and campaign events use named SLF4J messages. Failures use the typed exceptions above. Users see short sentences; details stay in logs. Pipeline is unchanged: Excel → Contact → template/`EmailComposer` → `EmailMessage` → `EmailSender` / `SmtpEmailSender`. Default batch remains off; dry-run remains the safe path.
+**After:** Pipeline Excel → `Contact` → template → `EmailMessage` → `EmailSender` → `SmtpEmailSender` (dry-run skips JavaMail). `mail.*` / `spring.mail.*` from env or gitignored local file. Default batch off, dry-run on. Campaign loop still in `MailBody`; attachment helper still in the root package.
 
 ## Tests
 
-Verified 2026-09-04 with `mvn -q test` (no live SMTP; `JavaMailSender` mocked in Spring tests; dry-run paths do not send).
+Verified 2026-09-05 with `mvn -q test` (no live SMTP).
 
 ```text
-Total tests: 88
-Passed: 88
+Total tests: 122
+Passed: 122
 Failed: 0
 Skipped: 0
-Coverage: not measured (Jacoco is not in pom.xml; M1-023 still open)
+Coverage: excel+template+campaign JaCoCo 98% instructions / 84% branches / 98% lines (`target/site/jacoco` after `mvn test`; not whole-app coverage)
 ```
+
+`mvn clean verify` passed (M1-031).
 
 ## Security
 
@@ -1138,19 +1159,21 @@ I1 (rotate any previously leaked Gmail App Password) remains a Google Account ac
 
 ## Known Issues
 
-* M1-021–M1-035 still open (Excel/template/validation/EmailSender test gaps vs task bullets, coverage gate, e2e/regression docs, cleanup, deps, verify, secret scan, architecture review, `docs/NEXT_MILESTONE.md`).
-* Coverage not reported until Jacoco or an equivalent is added (M1-023).
-* Possible leftover duplicate types from the refactor (cleanup is M1-029).
-* Production profile still defaults batch off / dry-run on unless env overrides (intentional safety).
+* `MailBody` not renamed; `MailBodyAttachment` / `SentAddressLog` in root; smtp ↔ attachment helper coupling (M1-034).
+* Email validity is still `contains("@")`; subject is not templated; Gmail-oriented defaults; no Maven Wrapper.
+* Production profile keeps batch off / dry-run on unless overridden (intentional).
+* Git history may still contain old secrets; do not rewrite history unless asked.
 
 ## Milestone 2 Readiness
 
 ```text
 Is the project ready for Spring Boot/SaaS development?
-NO
+YES (as a CLI core to wrap — see docs/NEXT_MILESTONE.md)
 
 If NO:
-Milestone 1 IDs M1-021–M1-035 are unfinished. Do not start APIs, auth, PostgreSQL, or payments.
+(not applicable)
+
+Caveat: the running app is still non-web. APIs, auth, PostgreSQL, Flyway, persistence, and workers are not implemented. Do not start payments or tracking pixels in the same pass as the first API.
 ```
 
 ---

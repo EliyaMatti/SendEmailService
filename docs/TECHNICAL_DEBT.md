@@ -1,10 +1,19 @@
 # Technical debt (M1-003)
 
-Findings from inspecting the current Excel → SMTP CLI. **This task does not change code.** Later Milestone 1 IDs should pick items up; do not treat this list as a license to rewrite everything at once.
+Findings from inspecting the Excel → SMTP CLI at **discovery**. Later Milestone 1 IDs picked many of these up. **Do not treat the original list as current.**
+
+## Status after M1-026 (M1-027)
+
+**Addressed (do not re-do as if still missing):** Excel/template/smtp/config packages; `Contact`; `ExcelValidator` + counts including in-file duplicates; `TemplateValidator`; `SmtpConfiguration` / `MailAppProperties`; `EmailSender` + classifier; `EmailMessage` / `EmailComposer`; test-send; profiles; structured logs; typed exceptions and operator messages; JaCoCo on excel/template/campaign; mocked SMTP cases; local e2e and batch regression tests.
+
+**Still open (Milestone 1 leftover, not SaaS):** `MailBody` still orchestrates the campaign loop (not renamed); `MailBodyAttachment` / `SentAddressLog` still in the root package; duplicate `isBlank` helpers; email validity is still `contains("@")`; Gmail-oriented defaults and a personal default subject; no Maven Wrapper; `.xlsx` only; subject is not templated; `@MockBean` on Boot 3.2.3.
+
+Original discovery notes follow.
 
 ---
 
 ## God classes
+
 
 - **`MailBody`** combines UTF-8 template I/O, `{{placeholder}}` rendering, sent-log skip logic, inter-send delay, per-recipient try/catch, summary logging, and process-level failure (`failed > 0` → throw). Template work and campaign orchestration should split (M1-007, M1-014).
 - **`ReadFromExcel`** is a single static entry point plus a nested `ColumnMap` that owns header detection, aliases, extra columns, and row extraction. Validation (empty file, duplicates, structured counts) is not a separate type (M1-005, M1-006).

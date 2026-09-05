@@ -24,9 +24,20 @@ Startup does **not** send mail unless you turn the batch on **and** turn dry-run
 
 Do **not** put SMTP passwords in source control. Any Gmail App Password that was previously hardcoded in this repo should be **revoked and rotated** in Google Account settings; it may still exist in git history.
 
+## Installation
+
+1. Clone the repository and install **Java 17+** and **Maven**.
+2. From the repo root, compile and test (no live SMTP): `mvn test`. Full Maven lifecycle (clean + tests + package/verify): `mvn clean verify`.
+3. Copy `src/main/resources/application-local.properties.example` to gitignored `src/main/resources/application-local.properties` (or set environment variables). Leave `MAIL_PASSWORD` empty until you need a real send.
+4. Prepare an `.xlsx` recipient file and a UTF-8 body template (the repo does not ship sample lists).
+
+More design notes: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/PROJECT_ANALYSIS.md](docs/PROJECT_ANALYSIS.md). Excel columns and placeholders: [docs/EXCEL_FORMAT.md](docs/EXCEL_FORMAT.md). Dependencies: [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md). After Milestone 1: [docs/NEXT_MILESTONE.md](docs/NEXT_MILESTONE.md). Discovery snapshots: [docs/BASELINE.md](docs/BASELINE.md), [docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md).
+
 ## How to use
 
 ### 1. Prepare the Excel file
+
+See [docs/EXCEL_FORMAT.md](docs/EXCEL_FORMAT.md) for required/optional columns, placeholders, invalid rows, duplicates, and file types.
 
 First row should be headers that include **email** and **name** (aliases such as `e-mail` / `full_name` work). Extra headers become placeholders: non-word characters are stripped and the name is lowercased (`Company` → `{{company}}`).
 
@@ -68,7 +79,7 @@ For HTML bodies, write HTML in the file and set `mail.html=true` (or `MAIL_HTML=
 
 Set `mail.attachment-path` to a readable file (for example a PDF). If the path is set but the file is missing, a real send fails **before** any message goes out. Leave the path empty to send without an attachment.
 
-### 4. Configure credentials and paths
+### 4. SMTP setup and paths
 
 Copy the example file and fill in values. `application-local.properties` is gitignored.
 
@@ -214,3 +225,22 @@ The default Spring profile is **`development`**. Use **`production`** for a depl
 Defaults in `application.properties` match this table. Real SMTP runs when dry-run is off **and** either the batch is enabled or test-send is enabled. SMTP connection settings bind through Spring `MailProperties` into `SmtpConfiguration`; campaign paths and sending flags bind through `MailAppProperties`. The SMTP password is never written to logs.
 
 Failures use typed runtime exceptions (`ExcelProcessingException`, `TemplateValidationException`, `SmtpConfigurationException`, `EmailSendingException`) with the same operator messages as before. Invalid Excel rows are skipped rather than thrown (`InvalidContactException` is not used).
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| Batch never runs | `mail.batch-enabled` / `MAIL_BATCH_ENABLED` is false (default). Test-send, if enabled, runs instead of the Excel list. |
+| Nothing is mailed | `mail.dry-run` defaults to **true**. Set `MAIL_DRY_RUN=false` only when you intend SMTP. |
+| `Unable to process the Excel file because it was not found` | `MAIL_EXCEL_FILE_PATH` points at a real `.xlsx` file. |
+| `… not a .xlsx workbook` | CSV/XLS are not supported. |
+| `… Email column was not found` / `Name column was not found` | Header row must include email and name (see Excel section above). |
+| `Template validation failed` | Subject/body non-empty; placeholders must match Excel columns; `{{` / `}}` must be well formed. |
+| `Unable to read the email body file` | `MAIL_BODY_FILE_PATH` exists and is readable UTF-8. |
+| `SMTP username, password, and from address are required` | Real send needs `MAIL_USERNAME`, `MAIL_PASSWORD`, and `MAIL_FROM`. Gmail: App Password, not account password. |
+| `mail.sent-log-path is not set` | Real **batch** send needs a sent-log path (default `sent-addresses.txt`). |
+| `attachment file could not be read` | `MAIL_ATTACHMENT_PATH` is set but the file is missing. Clear the path to send without an attachment. |
+| Authentication failed | Rotate App Password; enable SMTP AUTH / STARTTLS. Never put the password in git. |
+| Recipients skipped | Already listed in the sent-log, duplicate in the sheet, blank/`@`-less email, or empty row. |
+
+Stack traces stay in the log. Operator messages are the short sentences above. Do not use live SMTP to debug in this project’s agent workflow; use dry-run or `mvn test`.

@@ -23,6 +23,15 @@ class MailBodyAttachmentTest {
   }
 
   @Test
+  void blankAndNullAttachmentPathsAreSkipped() {
+    MailBodyAttachment attachment = new MailBodyAttachment();
+    assertDoesNotThrow(
+        () ->
+            attachment.addAttachments(
+                mock(MimeMessageHelper.class), java.util.Arrays.asList(null, "  ")));
+  }
+
+  @Test
   void missingAttachmentFileFails() {
     MailBodyAttachment attachment = new MailBodyAttachment();
     MimeMessageHelper helper = mock(MimeMessageHelper.class);

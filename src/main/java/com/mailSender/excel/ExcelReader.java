@@ -48,10 +48,10 @@ public class ExcelReader {
       int duplicates = 0;
 
       int startRow = columns.headerRow() ? sheet.getFirstRowNum() + 1 : sheet.getFirstRowNum();
-      for (int r = startRow; r <= sheet.getLastRowNum(); r++) {
+      for (int rowIndex = startRow; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
         totalRows++;
-        Row row = sheet.getRow(r);
-        int rowNumber = r + 1;
+        Row row = sheet.getRow(rowIndex);
+        int rowNumber = rowIndex + 1;
         if (row == null) {
           invalid++;
           log.warn("Skipping row {}: empty row", rowNumber);

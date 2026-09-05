@@ -127,10 +127,10 @@ public class BatchMailRunner implements CommandLineRunner {
       throw new ExcelProcessingException(
           "Unable to send a test email because the Excel file has no valid contacts to fill placeholders.");
     }
-    return copyWithTo(excel.getContacts().get(0), testTo);
+    return contactForTestSend(excel.getContacts().get(0), testTo);
   }
 
-  static Contact copyWithTo(Contact sample, String testTo) {
+  static Contact contactForTestSend(Contact sample, String testTo) {
     Map<String, String> extras = new LinkedHashMap<>(sample.getPlaceholders());
     extras.remove("email");
     extras.remove("name");

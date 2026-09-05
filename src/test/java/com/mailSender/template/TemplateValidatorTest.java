@@ -73,4 +73,70 @@ class TemplateValidatorTest {
                 "Hi {{Name}}, welcome to {{company}}.",
                 Set.of("email", "name", "company")));
   }
+
+  @Test
+  void nullSubjectFails() {
+    TemplateValidationException ex =
+        assertThrows(
+            TemplateValidationException.class,
+            () -> TemplateValidator.validate(null, "Hi {{name}}", Set.of("email", "name")));
+    assertTrue(ex.getMessage().contains("Subject is empty"));
+  }
+
+  @Test
+  void nullBodyFails() {
+    TemplateValidationException ex =
+        assertThrows(
+            TemplateValidationException.class,
+            () -> TemplateValidator.validate("Hello", null, Set.of("email", "name")));
+    assertTrue(ex.getMessage().contains("Body is empty"));
+  }
+
+  @Test
+  void strayClosingBracesFail() {
+    TemplateValidationException ex =
+        assertThrows(
+            TemplateValidationException.class,
+            () -> TemplateValidator.validate("Hello", "Hi }} there", Set.of("email", "name")));
+    assertTrue(ex.getMessage().contains("Invalid placeholder syntax near '}}'"));
+  }
+
+  @Test
+  void closingBracesBeforeOpenFail() {
+    TemplateValidationException ex =
+        assertThrows(
+            TemplateValidationException.class,
+            () ->
+                TemplateValidator.validate(
+                    "Hello", "Hi }} {{name}}", Set.of("email", "name")));
+    assertTrue(ex.getMessage().contains("Invalid placeholder syntax near '}}'"));
+  }
+
+  @Test
+  void placeholderWithSpacesFailsSyntax() {
+    TemplateValidationException ex =
+        assertThrows(
+            TemplateValidationException.class,
+            () ->
+                TemplateValidator.validate(
+                    "Hello", "Hi {{ full name }}", Set.of("email", "name")));
+    assertTrue(ex.getMessage().contains("Invalid placeholder syntax starting at '{{'"));
+  }
+
+  @Test
+  void nullPlaceholderKeysTreatedAsMissingRequiredFields() {
+    TemplateValidationException ex =
+        assertThrows(
+            TemplateValidationException.class,
+            () -> TemplateValidator.validate("Hello", "Hi", null));
+    assertTrue(ex.getMessage().contains("required fields: email and name"));
+  }
+
+  @Test
+  void blankKeysAreIgnoredWhenEmailAndNameArePresent() {
+    assertDoesNotThrow(
+        () ->
+            TemplateValidator.validate(
+                "Hello", "Hi {{name}}", Set.of("email", "name", "  ", "")));
+  }
 }

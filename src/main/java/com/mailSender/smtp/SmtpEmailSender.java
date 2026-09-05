@@ -53,8 +53,6 @@ public class SmtpEmailSender implements EmailSender {
       mailBodyAttachment.addAttachments(helper, message.getAttachments());
       mailSender.send(mimeMessage);
       log.info("Email sent successfully");
-    } catch (SmtpSendException e) {
-      throw e;
     } catch (Exception e) {
       log.debug("SMTP send failed", e);
       throw new SmtpSendException(SmtpFailureClassifier.userMessage(to, e), e);

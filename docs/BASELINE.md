@@ -1,8 +1,11 @@
 # Baseline (M1-002)
 
-Record of how the Excel → SMTP command-line app behaves **today**, before Milestone 1 architecture refactors. No production SMTP was used to produce this document.
+Record of how the Excel → SMTP command-line app behaved **at discovery**, before the package split. No production SMTP was used to produce this document.
+
+**M1-027:** This file is a **historical baseline**, not current operator docs. Today: typed exceptions, `ExcelReader` / `Contact`, `EmailSender`, test-send, Spring profiles, structured logs, duplicate-email counts at read time, and `mail.send-delay-ms`. Use [README.md](../README.md) and [ARCHITECTURE.md](ARCHITECTURE.md) for current behavior. The uncommitted `application.properties` batch/dry-run drift noted below was later restored to batch **off** / dry-run **on** in source.
 
 Verification on 2026-09-04:
+
 
 - `mvn -q test` — pass (JUnit; `JavaMailSender` mocked; context tests force `mail.batch-enabled=false`).
 - `MAIL_BATCH_ENABLED=false` `mvn spring-boot:run` — process starts, logs batch skipped, JVM exits 0.
